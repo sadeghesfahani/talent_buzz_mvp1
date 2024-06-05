@@ -43,9 +43,10 @@ THIRD_PARTY_APPS = [
     'rest_framework.authtoken',
     'drf_yasg',
     'corsheaders',
+    'simple_history',
 ]
 
-CUSTOM_APPS = ['user']
+CUSTOM_APPS = ['user', 'honeycomb']
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + CUSTOM_APPS
 
 MIDDLEWARE = [
