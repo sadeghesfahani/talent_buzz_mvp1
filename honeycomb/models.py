@@ -30,19 +30,25 @@ class Hive(models.Model):
     change_history = HistoricalRecords()
 
     def submit_membership_application(self, bee):
+
         if HiveRequest.objects.filter(hive=self, bee=bee, is_accepted=False).exists():
             raise ValidationError("A pending application already exists.")
+        if HiveRequest.objects.filter(hive=self, bee=bee).exists():
+            raise ValidationError("You already are a member")
+
         application = HiveRequest.objects.create(hive=self, bee=bee)
+        if self.is_public:
+            return self.accept_application(bee)
         return application
 
     def accept_application(self, bee):
         current_membership = Membership.objects.filter(hive=self, bee=bee).first()
         if current_membership:
-            current_membership.first().is_accepted = True
+            current_membership.is_accepted = True
             current_membership.save()
             return current_membership
 
-        return Membership.objects.create(is_accepted=True, membership_hive=self, membership_bee=bee)
+        return Membership.objects.create(is_accepted=True, hive=self, bee=bee)
 
     def __str__(self):
         return self.name
@@ -63,8 +69,8 @@ class Bee(models.Model):
 
 
 class Membership(models.Model):
-    membership_hive = models.ForeignKey(Hive, on_delete=models.CASCADE)
-    membership_bee = models.ForeignKey(Bee, on_delete=models.CASCADE)
+    hive = models.ForeignKey(Hive, on_delete=models.CASCADE)
+    bee = models.ForeignKey(Bee, on_delete=models.CASCADE)
     is_accepted = models.BooleanField(default=False)
     joined_at = models.DateTimeField(auto_now_add=True)
     left_at = models.DateTimeField(null=True, blank=True)
@@ -72,7 +78,7 @@ class Membership(models.Model):
     change_history = HistoricalRecords()
 
     class Meta:
-        unique_together = ('membership_hive', 'membership_bee')
+        unique_together = ('hive', 'bee')
 
     def save(self, *args, **kwargs):
         # Check if leaving the hive
@@ -81,7 +87,7 @@ class Membership(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.membership_bee} in {self.membership_hive}"
+        return f"{self.bee} in {self.hive}"
 
 
 class Nectar(models.Model):
@@ -125,8 +131,8 @@ class HiveRequest(models.Model):
 
     def _deactivate_existing_membership(self):
         existing_membership = Membership.objects.filter(
-            membership_hive=self.hive,
-            membership_bee=self.bee,
+            hive=self.hive,
+            bee=self.bee,
             is_accepted=True,
             left_at=None
         ).first()
@@ -143,8 +149,8 @@ class HiveRequest(models.Model):
 
     def _create_active_membership(self):
         Membership.objects.create(
-            membership_hive=self.hive,
-            membership_bee=self.bee,
+            hive=self.hive,
+            bee=self.bee,
             is_accepted=True
         )
 

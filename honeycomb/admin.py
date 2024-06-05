@@ -22,8 +22,8 @@ class BeeAdmin(SimpleHistoryAdmin):
 
 @admin.register(Membership)
 class MembershipAdmin(SimpleHistoryAdmin):
-    list_display = ('membership_hive', 'membership_bee', 'is_accepted', 'joined_at', 'left_at', 'honey_points')
-    search_fields = ('membership_hive__name', 'membership_bee__user__email')
+    list_display = ('hive', 'bee', 'is_accepted', 'joined_at', 'left_at', 'honey_points')
+    search_fields = ('hive__name', 'bee__user__email')
     list_filter = ('is_accepted', 'joined_at', 'left_at')
 
 @admin.register(Nectar)
