@@ -7,6 +7,8 @@ from django.db.models import Sum
 from django.utils import timezone
 from simple_history.models import HistoricalRecords
 
+from communication.models import Conversation
+
 HIVE_TYPE_CHOICES = [
     ('queen', 'With Queen (Paid)'),
     ('no_queen', 'No Queen (Collective Collaboration)'),
@@ -74,6 +76,10 @@ class Hive(models.Model):
     def is_admin_by_bee_id(self, bee_id):
         bee = Bee.objects.get(id=bee_id)
         return self.admins.filter(id=bee.user.id).exists()
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        Conversation.objects.get_or_create(hive=self, tag="general")
 
     def __str__(self):
         return self.name
@@ -163,6 +169,10 @@ class Nectar(models.Model):
 
     def get_pending_applications(self):
         return Contract.objects.filter(nectar=self, is_accepted=False)
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        Conversation.objects.get_or_create(nectar=self, tag="general")
 
     def __str__(self):
         return self.nectar_title

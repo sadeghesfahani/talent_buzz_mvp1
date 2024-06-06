@@ -48,7 +48,7 @@ THIRD_PARTY_APPS = [
     'django_filters',
 ]
 
-CUSTOM_APPS = ['user', 'honeycomb', 'authentication','common']
+CUSTOM_APPS = ['user', 'honeycomb', 'authentication','common','communication']
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + CUSTOM_APPS
 
 MIDDLEWARE = [

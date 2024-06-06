@@ -37,5 +37,6 @@ urlpatterns = [
     path('user/', include('user.urls')),
     path('honeycomb/', include('honeycomb.urls')),
     path('auth/', include('authentication.urls')),
+    path('comunication/', include('communication.urls')),
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
 ]
