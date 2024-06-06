@@ -1,7 +1,9 @@
 from django.core.exceptions import ValidationError, PermissionDenied
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets
-from rest_framework.exceptions import NotFound
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
+from rest_framework import viewsets, status
+from rest_framework.exceptions import NotFound, MethodNotAllowed
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -9,9 +11,8 @@ from rest_framework.views import APIView
 from .filters import HiveFilter, BeeFilter, NectarFilter, MembershipFilter, ContractFilter, HiveRequestFilter
 from .honeycomb_service import NectarService, HiveService
 from .models import Hive, Bee, Membership, Nectar, HiveRequest, Contract
-from .permissions import IsHiveAdmin
 from .serializers import HiveSerializer, BeeSerializer, MembershipSerializer, NectarSerializer, HiveRequestSerializer, \
-    ContractSerializer
+    ContractSerializer, MembershipAcceptSerializer, MembershipSubmitSerializer
 
 
 class HiveViewSet(viewsets.ModelViewSet):
@@ -102,20 +103,44 @@ class HiveRequestViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         hive = serializer.validated_data['hive']
         bee = serializer.validated_data['bee']
-        HiveService.submit_membership_application(hive, bee)
-        return super().perform_create(serializer)
+        try:
+            application = HiveService.submit_membership_application(hive, bee)
+            return self._handle_application_response(application, self.request.user)
+        except NotFound as e:
+            raise ValidationError({"message": str(e)})
+        except ValidationError as e:
+            raise ValidationError({"message": str(e)})
 
     def perform_update(self, serializer):
-        instance = self.get_object()
-        if 'is_accepted' in serializer.validated_data and serializer.validated_data['is_accepted']:
-            HiveService.accept_membership_application(instance)
-        return super().perform_update(serializer)
+        raise MethodNotAllowed("PUT/PATCH method not allowed on this endpoint.")
+
+    def destroy(self, request, *args, **kwargs):
+        raise MethodNotAllowed("DELETE method not allowed on this endpoint.")
 
     def get_permissions(self):
         permission_classes = [IsAuthenticated]
-        if self.action in ['update', 'partial_update']:
-            permission_classes.append(IsHiveAdmin)
+        if self.action in ['update', 'partial_update', 'destroy']:
+            permission_classes.append(MethodNotAllowed)
         return [permission() for permission in permission_classes]
+
+    def _handle_application_response(self, application, user):
+        if self._is_user_admin_of_hive(application.hive, user):
+            try:
+                membership = application.accept_application(user)
+                serialized_membership = MembershipSerializer(membership)
+                return Response(
+                    {"message": "Application accepted successfully.", "membership": serialized_membership.data},
+                    status=status.HTTP_202_ACCEPTED)
+            except ValidationError as e:
+                raise ValidationError({"message": str(e)})
+        else:
+            serialized_hive_request = HiveRequestSerializer(application)
+            return Response(
+                {"message": "Application submitted", "application": serialized_hive_request.data},
+                status=status.HTTP_201_CREATED)
+
+    def _is_user_admin_of_hive(self, hive, user):
+        return hive.is_admin_by_user(user)
 
 
 class ContractViewSet(viewsets.ModelViewSet):
@@ -138,56 +163,32 @@ class ContractViewSet(viewsets.ModelViewSet):
         return super().perform_update(serializer)
 
 
-class Membership(APIView):
-
+class MembershipAcceptView(APIView):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.hive_service = HiveService()
         self.nectar_service = NectarService()
 
+    @swagger_auto_schema(
+        request_body=MembershipAcceptSerializer,
+        responses={
+            200: openapi.Response(description="Membership application accepted"),
+            400: openapi.Response(description="Bad Request"),
+            403: openapi.Response(description="Forbidden"),
+            404: openapi.Response(description="Not Found")
+        }
+    )
     def post(self, request):
-        hive_id = request.data.get('hive')
-        if not hive_id:
-            return Response({"message": "Hive ID is required"}, status=400)
+        serializer = MembershipAcceptSerializer(data=request.data)
+        if serializer.is_valid():
+            hive_request_id = serializer.validated_data['hive_request_id']
 
-        try:
-            hive = self._get_hive(hive_id)
-            bee = self._get_bee(request.user)
-            application = self._submit_application(hive, bee)
-            return self._handle_application_response(application, request.user)
-        except NotFound as e:
-            return Response({"message": str(e)}, status=404)
-        except ValidationError as e:
-            return Response({"message": str(e)}, status=400)
+            hive_request = self.hive_service.get_hive(hive_request_id)
+            if not hive_request:
+                return Response({"message": "Hive Request not found"}, status=status.HTTP_404_NOT_FOUND)
+            if not hive_request.hive.is_admin_by_user(request.user):
+                return Response({"message": "You are not an admin of this hive"}, status=status.HTTP_403_FORBIDDEN)
 
-    def _get_hive(self, hive_id):
-        try:
-            return self.hive_service.get_hive(hive_id)
-        except Hive.DoesNotExist:
-            raise NotFound("Hive not found")
-
-    def _get_bee(self, user):
-        try:
-            return Bee.objects.get(user=user)
-        except Bee.DoesNotExist:
-            raise NotFound("There is no associated bee to you")
-
-    def _submit_application(self, hive, bee):
-        try:
-            return self.hive_service.submit_membership_application(hive, bee)
-        except ValidationError:
-            raise ValidationError("You already have a pending application.")
-
-    def _handle_application_response(self, application, user):
-        try:
-            membership = application.accept_application(user)
-            serialized_membership = MembershipSerializer(membership)
-            return Response(
-                {"message": "Application accepted successfully.", "membership": serialized_membership.data},
-                status=201)
-        except ValidationError:
-            serialized_hive_request = HiveRequestSerializer(application)
-            return Response(
-                {"message": "Application submitted", "application": serialized_hive_request.data},
-                status=400
-            )
+            hive_request.accept_application(hive_request.bee)
+            return Response({"message": "Membership application accepted"}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

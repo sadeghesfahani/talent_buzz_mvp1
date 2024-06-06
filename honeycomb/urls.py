@@ -1,7 +1,7 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 from . import views
-from .views import Membership
+from .views import MembershipSubmitView, MembershipAcceptView
 
 router = DefaultRouter()
 router.register(r'hives', views.HiveViewSet)
@@ -13,5 +13,5 @@ router.register(r'contracts', views.ContractViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('request_hive_membership', Membership.as_view()),
+    path('accept_hive_membership', MembershipAcceptView.as_view()),
 ]

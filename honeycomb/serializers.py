@@ -37,3 +37,10 @@ class ContractSerializer(serializers.ModelSerializer):
     class Meta:
         model = Contract
         fields = '__all__'
+
+
+class MembershipAcceptSerializer(serializers.Serializer):
+    hive_request_id = serializers.IntegerField(required=True)
+
+class MembershipSubmitSerializer(serializers.Serializer):
+    hive = serializers.IntegerField(required=True)
