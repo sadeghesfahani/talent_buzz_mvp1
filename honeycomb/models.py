@@ -29,6 +29,7 @@ class Hive(models.Model):
     hive_requirements = models.TextField()
     hive_bees = models.ManyToManyField('Bee', through='Membership')
     is_public = models.BooleanField(default=False)
+    documents = models.ManyToManyField('common.Document', related_name='hive_documents', blank=True)
     change_history = HistoricalRecords()
 
     def submit_membership_application(self, bee):

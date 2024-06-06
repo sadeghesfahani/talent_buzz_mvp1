@@ -43,8 +43,10 @@ class CustomUserManager(BaseUserManager):
 
 class PersonalDetails(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='personal_details')
+    first_name = models.CharField(max_length=REGULAR_CHAR_LENGTH, blank=True)
+    last_name = models.CharField(max_length=REGULAR_CHAR_LENGTH, blank=True)
+    date_of_birth = models.DateField(blank=True, null=True)
     passport_number = models.CharField(max_length=REGULAR_CHAR_LENGTH, blank=True)
-    identity = models.JSONField(blank=True, default=dict)
     measures = models.ManyToManyField('Measures', related_name='user_measures', blank=True)
 
     def __str__(self):
