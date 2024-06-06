@@ -62,6 +62,18 @@ class Hive(models.Model):
             total_honey_points=Sum('membership__honey_points')
         ).order_by('-total_honey_points')
 
+    def is_admin_by_user(self, user):
+        return user in self.admins.all()
+
+    def is_admin_by_user_id(self, user_id):
+        return self.admins.filter(id=user_id).exists()
+
+    def is_admin_by_bee(self, bee):
+        return bee.user in self.admins.all()
+
+    def is_admin_by_bee_id(self, bee_id):
+        bee = Bee.objects.get(id=bee_id)
+        return self.admins.filter(id=bee.user.id).exists()
     def __str__(self):
         return self.name
 

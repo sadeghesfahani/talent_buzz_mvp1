@@ -1,4 +1,4 @@
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, PermissionDenied
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets
 from rest_framework.exceptions import NotFound
@@ -27,7 +27,24 @@ class HiveViewSet(viewsets.ModelViewSet):
         return hive
 
     def perform_update(self, serializer):
+        hive = self.get_object()
+        if not hive.is_admin_by_user(self.request.user):
+            raise PermissionDenied("You do not have permission to edit this hive.")
         serializer.save(user=self.request.user)
+
+    def destroy(self, request, *args, **kwargs):
+        hive = self.get_object()
+        if not hive.is_admin_by_user(request.user):
+            raise PermissionDenied("You do not have permission to delete this hive.")
+        # Custom logic for deleting a hive can go here
+        return super().destroy(request, *args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        hive = self.get_object()
+        if not hive.is_admin_by_user(request.user):
+            raise PermissionDenied("You do not have permission to partially update this hive.")
+        # Custom logic for partial updates can go here
+        return super().partial_update(request, *args, **kwargs)
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
