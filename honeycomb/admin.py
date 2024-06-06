@@ -10,7 +10,7 @@ class HiveAdmin(SimpleHistoryAdmin):
     filter_horizontal = ('admins',)  # Removed 'hive_bees' from filter_horizontal
     fieldsets = (
         (None, {
-            'fields': ('name', 'description', 'hive_type', 'hive_requirements', 'admins')
+            'fields': ('name', 'description', 'hive_type', 'hive_requirements', 'admins', 'is_public')
         }),
     )
 
@@ -40,7 +40,7 @@ class HiveRequestAdmin(SimpleHistoryAdmin):
 
     def accept_application(self, request, queryset):
         for application in queryset:
-            application.accept_application()
+            application.accept_application(request.user)
     accept_application.short_description = 'Accept selected applications'
 
     actions = [accept_application]
