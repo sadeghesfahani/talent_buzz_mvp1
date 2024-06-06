@@ -29,6 +29,21 @@ class HiveViewSet(viewsets.ModelViewSet):
     def perform_update(self, serializer):
         serializer.save(user=self.request.user)
 
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        bees_ordered = instance.get_bees_ordered_by_honey_points()
+        data = {
+            "hive": HiveSerializer(instance).data,
+            "bees": [
+                {
+                    "bee_id": bee.id,
+                    "email": bee.user.email,
+                    "total_honey_points": bee.total_honey_points
+                } for bee in bees_ordered
+            ]
+        }
+        return Response(data)
+
 
 class BeeViewSet(viewsets.ModelViewSet):
     queryset = Bee.objects.all()

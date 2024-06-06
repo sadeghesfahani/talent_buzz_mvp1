@@ -3,6 +3,7 @@ import uuid
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import Sum
 from django.utils import timezone
 from simple_history.models import HistoricalRecords
 
@@ -53,6 +54,12 @@ class Hive(models.Model):
 
         return Membership.objects.create(is_accepted=True, hive=self, bee=bee)
 
+    def get_bees_ordered_by_honey_points(self):
+        return Bee.objects.filter(
+            membership__hive=self
+        ).annotate(
+            total_honey_points=Sum('membership__honey_points')
+        ).order_by('-total_honey_points')
     def __str__(self):
         return self.name
 
