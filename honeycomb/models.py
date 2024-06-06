@@ -22,6 +22,7 @@ BEE_TYPE_CHOICES = [
 NECTAR_IS_FULL_ERROR = "This nectar already has the required number of freelancers."
 COMMON_DOCUMENT_MODEL = 'common.Document'
 
+
 class Hive(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField()
@@ -60,6 +61,7 @@ class Hive(models.Model):
         ).annotate(
             total_honey_points=Sum('membership__honey_points')
         ).order_by('-total_honey_points')
+
     def __str__(self):
         return self.name
 
@@ -214,6 +216,7 @@ class Contract(models.Model):
     contract_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     nectar = models.ForeignKey('Nectar', on_delete=models.CASCADE, related_name='applications')
     bee = models.ForeignKey(Bee, on_delete=models.CASCADE)
+    accepted_rate = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     is_accepted = models.BooleanField(default=False)
     applied_at = models.DateTimeField(auto_now_add=True)
     accepted_at = models.DateTimeField(null=True, blank=True)
@@ -221,6 +224,14 @@ class Contract(models.Model):
     completed_at = models.DateTimeField(null=True, blank=True)  # When the contract work was completed
     documents = models.ManyToManyField(COMMON_DOCUMENT_MODEL, related_name='contract_documents', blank=True)
     change_history = HistoricalRecords()
+
+    def save(self, *args, **kwargs):
+        # Prevent changes to accepted_rate if the contract is already accepted
+        if self.pk is not None:  # Check if the object is being updated
+            original = Contract.objects.get(pk=self.pk)
+            if original.is_accepted and original.accepted_rate != self.accepted_rate:
+                raise ValidationError("Cannot change the accepted rate of an accepted contract.")
+        super().save(*args, **kwargs)
 
     def accept_application(self, user):
         if self.is_accepted:
