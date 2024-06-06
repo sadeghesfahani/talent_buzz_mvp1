@@ -25,7 +25,7 @@ class Hive(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField()
     hive_type = models.CharField(max_length=10, choices=HIVE_TYPE_CHOICES)
-    admins = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='admin_hives')
+    admins = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='admin_hives', blank=True, null=True)
     hive_requirements = models.TextField()
     hive_bees = models.ManyToManyField('Bee', through='Membership')
     is_public = models.BooleanField(default=False)
@@ -104,6 +104,7 @@ class Nectar(models.Model):
     updated_at = models.DateTimeField(auto_now=True)  # Timestamp when the gig was last updated
     deadline = models.DateTimeField(null=True, blank=True)  # Deadline for the gig
     required_bees = models.PositiveIntegerField(blank=True, null=True, default=1)  # Number of freelancers required
+    status = models.CharField(max_length=255, blank=True)  # Status of the gig
     change_history = HistoricalRecords()
 
     def submit_contract(self, bee):
@@ -148,19 +149,22 @@ class HiveRequest(models.Model):
     is_accepted = models.BooleanField(default=False)
     applied_at = models.DateTimeField(auto_now_add=True)
     accepted_at = models.DateTimeField(null=True, blank=True)
+    motivation = models.TextField(blank=True)
     change_history = HistoricalRecords()
 
     def accept_application(self, user):
         self._validate_application()
         self._check_permissions(user)
         self._deactivate_existing_membership()
-        self._accept_application()
+        return self._accept_application()
 
     def _validate_application(self):
         if self.is_accepted:
             raise ValidationError("Application is already accepted.")
 
     def _check_permissions(self, user):
+        if self.hive.is_public:
+            return True
         if user not in self.hive.admins.all():
             raise ValidationError("Only hive admins can accept membership applications.")
 
@@ -180,14 +184,16 @@ class HiveRequest(models.Model):
         self.is_accepted = True
         self.accepted_at = timezone.now()
         self.save()
-        self._create_active_membership()
+        return self._create_active_membership()
 
     def _create_active_membership(self):
-        Membership.objects.create(
+        membership = Membership.objects.get_or_create(
             hive=self.hive,
             bee=self.bee,
-            is_accepted=True
-        )
+        )[0]
+        membership.is_accepted = True
+        membership.save()
+        return membership
 
     def __str__(self):
         return f"Application of {self.bee} to {self.hive}"

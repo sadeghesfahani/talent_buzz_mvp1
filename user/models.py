@@ -88,6 +88,7 @@ class FreelancerDetails(models.Model):
 class User(AbstractBaseUser, PermissionsMixin):
     # Account information
     email = models.EmailField(unique=True, db_index=True)
+    username = models.CharField(max_length=REGULAR_CHAR_LENGTH, blank=True, null=True)
     phone_number = models.CharField(
         validators=[PHONE_REGEX], max_length=PHONE_LENGTH,
         blank=True, null=True, unique=True, db_index=True

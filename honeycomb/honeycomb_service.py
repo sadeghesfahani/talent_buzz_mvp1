@@ -1,6 +1,6 @@
 from django.core.exceptions import ValidationError
 
-from .models import HiveRequest, Contract
+from .models import HiveRequest, Contract, Hive
 
 
 class HiveService:
@@ -14,6 +14,14 @@ class HiveService:
     @staticmethod
     def accept_membership_application(application,user):
         application.accept_application(user)
+
+    @staticmethod
+    def get_hive_admins(hive):
+        return hive.admins.all()
+
+    @staticmethod
+    def get_hive(hive_id):
+        return Hive.objects.get(id=hive_id)
 
 
 class NectarService:
