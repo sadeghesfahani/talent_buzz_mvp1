@@ -6,7 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .filters import HiveFilter, BeeFilter, NectarFilter, MembershipFilter, ContractFilter
+from .filters import HiveFilter, BeeFilter, NectarFilter, MembershipFilter, ContractFilter, HiveRequestFilter
 from .honeycomb_service import NectarService, HiveService
 from .models import Hive, Bee, Membership, Nectar, HiveRequest, Contract
 from .permissions import IsHiveAdmin
@@ -90,6 +90,14 @@ class HiveRequestViewSet(viewsets.ModelViewSet):
     queryset = HiveRequest.objects.all()
     serializer_class = HiveRequestSerializer
     permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = HiveRequestFilter
+
+    def get_queryset(self):
+        user = self.request.user
+        hives_admin = Hive.objects.filter(admins__in=[user])
+        hive_ids = hives_admin.values_list('id', flat=True)
+        return HiveRequest.objects.filter(hive_id__in=hive_ids)
 
     def perform_create(self, serializer):
         hive = serializer.validated_data['hive']
