@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
-from .models import Hive, Bee, Membership, Nectar, HiveRequest, Contract
+from user.serializers import UserSerializer
+from .models import Hive, Bee, Membership, Nectar, HiveRequest, Contract, Report
 
 
 class HiveSerializer(serializers.ModelSerializer):
@@ -27,6 +28,22 @@ class NectarSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class BeeWithDetailSerializer(serializers.ModelSerializer):
+    user = UserSerializer()
+
+    class Meta:
+        model = Bee
+        fields = '__all__'
+
+
+class HiveWiThDetailsSerializer(serializers.ModelSerializer):
+    hive_bees = BeeWithDetailSerializer(many=True)
+
+    class Meta:
+        model = Hive
+        fields = '__all__'
+
+
 class HiveRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = HiveRequest
@@ -42,5 +59,12 @@ class ContractSerializer(serializers.ModelSerializer):
 class MembershipAcceptSerializer(serializers.Serializer):
     hive_request_id = serializers.IntegerField(required=True)
 
+
 class MembershipSubmitSerializer(serializers.Serializer):
     hive = serializers.IntegerField(required=True)
+
+
+class ReportSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Report
+        fields = '__all__'

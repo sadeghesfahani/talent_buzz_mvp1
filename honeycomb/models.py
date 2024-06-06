@@ -74,6 +74,7 @@ class Hive(models.Model):
     def is_admin_by_bee_id(self, bee_id):
         bee = Bee.objects.get(id=bee_id)
         return self.admins.filter(id=bee.user.id).exists()
+
     def __str__(self):
         return self.name
 
@@ -258,3 +259,38 @@ class Contract(models.Model):
 
     def __str__(self):
         return f"Application for {self.nectar} by {self.bee}"
+
+
+class ReportManager(models.Manager):
+    def for_hive(self, hive):
+        return self.filter(hive=hive)
+
+    def for_nectar(self, nectar):
+        return self.filter(nectar=nectar)
+
+    def for_bee(self, bee):
+        return self.filter(bee=bee)
+
+
+class Report(models.Model):
+    hive = models.ForeignKey(Hive, on_delete=models.CASCADE, related_name='hive_reports')
+    nectar = models.ForeignKey(Nectar, on_delete=models.CASCADE, related_name='nectar_reports')
+    bee = models.ForeignKey(Bee, on_delete=models.CASCADE, related_name='bee_reports')
+    title = models.CharField(max_length=255)
+    content = models.TextField()
+    documents = models.ManyToManyField(COMMON_DOCUMENT_MODEL, related_name='report_documents', blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    objects = ReportManager()
+
+    def __str__(self):
+        return self.title
+
+    def clean(self):
+        if not (self.hive or self.nectar or self.bee):
+            raise ValidationError("A report must be related to at least one of hive, nectar, or bee.")
+        super().clean()
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)

@@ -3,6 +3,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import viewsets, status
+from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound, MethodNotAllowed
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -10,9 +11,9 @@ from rest_framework.views import APIView
 
 from .filters import HiveFilter, BeeFilter, NectarFilter, MembershipFilter, ContractFilter, HiveRequestFilter
 from .honeycomb_service import NectarService, HiveService
-from .models import Hive, Bee, Membership, Nectar, HiveRequest, Contract
+from .models import Hive, Bee, Membership, Nectar, HiveRequest, Contract, Report
 from .serializers import HiveSerializer, BeeSerializer, MembershipSerializer, NectarSerializer, HiveRequestSerializer, \
-    ContractSerializer, MembershipAcceptSerializer, MembershipSubmitSerializer
+    ContractSerializer, MembershipAcceptSerializer, ReportSerializer, HiveWiThDetailsSerializer
 
 
 class HiveViewSet(viewsets.ModelViewSet):
@@ -61,6 +62,37 @@ class HiveViewSet(viewsets.ModelViewSet):
             ]
         }
         return Response(data)
+
+    @action(detail=True, methods=['get'], url_path='dashboard')
+    def dashboard(self, request, pk=None):
+        try:
+            hive = self.get_object()
+
+            # Aggregated Data
+            active_nectars = Nectar.objects.filter(nectar_hive=hive, status='Active')
+            completed_nectars = Nectar.objects.filter(nectar_hive=hive, status='Complete')
+            active_nectars_count = active_nectars.count()
+            total_open_contracts = Contract.objects.filter(nectar__nectar_hive=hive, is_accepted=True,
+                                                           completed_at__isnull=True).count()
+            total_contracts = Contract.objects.filter(nectar__nectar_hive=hive).count()
+            pending_requests = HiveRequest.objects.filter(hive=hive, is_accepted=False).count()
+            pending_contracts = Contract.objects.filter(nectar__nectar_hive=hive, is_accepted=False).count()
+            last_reports = Report.objects.filter(hive=hive).order_by('-created_at')[:5]
+
+            data = {
+                'hive': HiveWiThDetailsSerializer(hive).data,
+                'active_nectars': NectarSerializer(active_nectars, many=True).data,
+                'total_active_nectars': active_nectars_count,
+                'total_completed_nectars': completed_nectars.count(),
+                'total_open_contracts': total_open_contracts,
+                'total_contracts': total_contracts,
+                'pending_requests': pending_requests,
+                'pending_contracts': pending_contracts,
+                'last_reports': ReportSerializer(last_reports, many=True).data
+            }
+            return Response(data)
+        except Hive.DoesNotExist:
+            return Response({"message": "Hive not found"}, status=404)
 
 
 class BeeViewSet(viewsets.ModelViewSet):
