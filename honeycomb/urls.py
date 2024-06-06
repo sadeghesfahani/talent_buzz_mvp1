@@ -1,7 +1,7 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 from . import views
-from .views import Membership
+from .views import MembershipAcceptView
 
 router = DefaultRouter()
 router.register(r'hives', views.HiveViewSet)
