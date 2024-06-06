@@ -18,6 +18,8 @@ BEE_TYPE_CHOICES = [
     ('queen', 'Queen'),
 ]
 
+NECTAR_IS_FULL_ERROR = "This nectar already has the required number of freelancers."
+
 
 class Hive(models.Model):
     name = models.CharField(max_length=255)
@@ -95,13 +97,46 @@ class Nectar(models.Model):
     nectar_description = models.TextField()
     nectar_hive = models.ForeignKey(Hive, on_delete=models.CASCADE, related_name='nectars', blank=True, null=True)
     is_public = models.BooleanField(default=True)
+    price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)  # Price for the gig
+    duration = models.DurationField(blank=True, null=True)  # Expected duration to complete the gig
+    required_skills = models.TextField(blank=True)  # Skills required for the gig
+    created_at = models.DateTimeField(auto_now_add=True)  # Timestamp when the gig was created
+    updated_at = models.DateTimeField(auto_now=True)  # Timestamp when the gig was last updated
+    deadline = models.DateTimeField(null=True, blank=True)  # Deadline for the gig
+    required_bees = models.PositiveIntegerField(blank=True, null=True, default=1)  # Number of freelancers required
     change_history = HistoricalRecords()
 
     def submit_contract(self, bee):
+        if self.is_full():
+            raise ValidationError(NECTAR_IS_FULL_ERROR)
+        if Contract.objects.filter(nectar=self, bee=bee, is_accepted=False).exists():
+            raise ValidationError("A pending application already exists.")
+        if Contract.objects.filter(nectar=self, bee=bee, is_accepted=True).exists():
+            raise ValidationError("You are already working on this gig.")
         return Contract.objects.create(nectar=self, bee=bee, is_accepted=False)
+
+    def accept_application(self, contract, user):
+        if self.is_full():
+            raise ValidationError(NECTAR_IS_FULL_ERROR)
+        if contract.nectar != self:
+            raise ValidationError("This contract does not belong to this nectar.")
+        contract.accept_application(user)
+        return contract
+
+    def is_full(self):
+        return Contract.objects.filter(is_accepted=True, completed_at__isnull=True).count() >= self.required_bees
 
     def get_hive_admins(self):
         return self.nectar_hive.admins.all()
+
+    def get_active_contracts(self):
+        return Contract.objects.filter(nectar=self, is_accepted=True, completed_at__isnull=True)
+
+    def get_completed_contracts(self):
+        return Contract.objects.filter(nectar=self, is_accepted=True, completed_at__isnull=False)
+
+    def get_pending_applications(self):
+        return Contract.objects.filter(nectar=self, is_accepted=False)
 
     def __str__(self):
         return self.nectar_title
@@ -165,6 +200,8 @@ class Contract(models.Model):
     is_accepted = models.BooleanField(default=False)
     applied_at = models.DateTimeField(auto_now_add=True)
     accepted_at = models.DateTimeField(null=True, blank=True)
+    started_at = models.DateTimeField(null=True, blank=True)  # When the contract work started
+    completed_at = models.DateTimeField(null=True, blank=True)  # When the contract work was completed
     change_history = HistoricalRecords()
 
     def accept_application(self, user):
@@ -172,6 +209,8 @@ class Contract(models.Model):
             raise ValidationError("Application is already accepted.")
         if user not in self.nectar.nectar_hive.admins.all():
             raise ValidationError("Only hive admins can accept nectar applications.")
+        if self.nectar.is_full():
+            raise ValidationError("This nectar already has the required number of freelancers.")
         self.is_accepted = True
         self.accepted_at = timezone.now()
         self.save()

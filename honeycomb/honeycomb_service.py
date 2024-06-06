@@ -18,10 +18,10 @@ class HiveService:
 
 class NectarService:
     @staticmethod
-    def submit_nectar_application(nectar, applicant):
-        if Contract.objects.filter(nectar=nectar, applicant=applicant, is_accepted=False).exists():
+    def submit_nectar_application(nectar, bee):
+        if Contract.objects.filter(nectar=nectar, bee=bee, is_accepted=False).exists():
             raise ValidationError("A pending application already exists.")
-        application = Contract.objects.create(nectar=nectar, applicant=applicant)
+        application = Contract.objects.create(nectar=nectar, bee=bee)
         return application
 
     @staticmethod
