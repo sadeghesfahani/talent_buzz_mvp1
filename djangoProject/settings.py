@@ -44,9 +44,10 @@ THIRD_PARTY_APPS = [
     'drf_yasg',
     'corsheaders',
     'simple_history',
+    'rest_framework_simplejwt',
 ]
 
-CUSTOM_APPS = ['user', 'honeycomb']
+CUSTOM_APPS = ['user', 'honeycomb', 'authentication']
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + CUSTOM_APPS
 
 MIDDLEWARE = [
@@ -130,3 +131,10 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'user.User'
+
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    )
+}
