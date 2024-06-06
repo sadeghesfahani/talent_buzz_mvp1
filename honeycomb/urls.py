@@ -5,7 +5,7 @@ from .views import MembershipAcceptView
 
 router = DefaultRouter()
 router.register(r'hives', views.HiveViewSet)
-# router.register(r'bees', views.BeeViewSet)
+router.register(r'bees', views.BeeViewSet)
 router.register(r'memberships', views.MembershipViewSet)
 router.register(r'nectars', views.NectarViewSet)
 router.register(r'hive-requests', views.HiveRequestViewSet)
