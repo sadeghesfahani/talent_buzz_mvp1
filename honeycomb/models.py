@@ -19,7 +19,7 @@ BEE_TYPE_CHOICES = [
 ]
 
 NECTAR_IS_FULL_ERROR = "This nectar already has the required number of freelancers."
-
+COMMON_DOCUMENT_MODEL = 'common.Document'
 
 class Hive(models.Model):
     name = models.CharField(max_length=255)
@@ -29,7 +29,7 @@ class Hive(models.Model):
     hive_requirements = models.TextField()
     hive_bees = models.ManyToManyField('Bee', through='Membership')
     is_public = models.BooleanField(default=False)
-    documents = models.ManyToManyField('common.Document', related_name='hive_documents', blank=True)
+    documents = models.ManyToManyField(COMMON_DOCUMENT_MODEL, related_name='hive_documents', blank=True)
     change_history = HistoricalRecords()
 
     def submit_membership_application(self, bee):
@@ -62,6 +62,7 @@ class Bee(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)  # User associated with this bee
     bee_bio = models.TextField(blank=True)
     bee_type = models.CharField(max_length=10, choices=BEE_TYPE_CHOICES, default=DEFAULT_BEE_TYPE)
+    documents = models.ManyToManyField(COMMON_DOCUMENT_MODEL, related_name='bee_documents', blank=True)
     change_history = HistoricalRecords()
 
     def submit_hive_application(self, hive):
@@ -106,6 +107,7 @@ class Nectar(models.Model):
     deadline = models.DateTimeField(null=True, blank=True)  # Deadline for the gig
     required_bees = models.PositiveIntegerField(blank=True, null=True, default=1)  # Number of freelancers required
     status = models.CharField(max_length=255, blank=True)  # Status of the gig
+    documents = models.ManyToManyField(COMMON_DOCUMENT_MODEL, related_name='nectar_documents', blank=True)
     change_history = HistoricalRecords()
 
     def submit_contract(self, bee):
@@ -151,6 +153,7 @@ class HiveRequest(models.Model):
     applied_at = models.DateTimeField(auto_now_add=True)
     accepted_at = models.DateTimeField(null=True, blank=True)
     motivation = models.TextField(blank=True)
+    documents = models.ManyToManyField(COMMON_DOCUMENT_MODEL, related_name='hive_request_documents', blank=True)
     change_history = HistoricalRecords()
 
     def accept_application(self, user):
@@ -209,6 +212,7 @@ class Contract(models.Model):
     accepted_at = models.DateTimeField(null=True, blank=True)
     started_at = models.DateTimeField(null=True, blank=True)  # When the contract work started
     completed_at = models.DateTimeField(null=True, blank=True)  # When the contract work was completed
+    documents = models.ManyToManyField(COMMON_DOCUMENT_MODEL, related_name='contract_documents', blank=True)
     change_history = HistoricalRecords()
 
     def accept_application(self, user):

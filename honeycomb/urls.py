@@ -4,7 +4,7 @@ from . import views
 from .views import Membership
 
 router = DefaultRouter()
-# router.register(r'hives', views.HiveViewSet)
+router.register(r'hives', views.HiveViewSet)
 # router.register(r'bees', views.BeeViewSet)
 router.register(r'memberships', views.MembershipViewSet)
 # router.register(r'nectars', views.NectarViewSet)
