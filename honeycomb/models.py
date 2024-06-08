@@ -79,6 +79,9 @@ class Hive(models.Model):
         bee = Bee.objects.get(id=bee_id)
         return self.admins.filter(id=bee.user.id).exists()
 
+    def get_hive_bees(self) -> QuerySet['Bee']:
+        return Bee.objects.filter(membership__hive=self, membership__is_accepted=True)
+
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         Conversation.objects.get_or_create(hive=self, tag="general")
