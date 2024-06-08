@@ -85,6 +85,12 @@ class UserAdmin(BaseUserAdmin):
     ordering = ('email',)
     date_hierarchy = 'date_joined'
     list_select_related = ('personal_details', 'company_details', 'freelancer_details')
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': ('email', 'password1', 'password2', 'is_active', 'is_staff', 'is_superuser'),
+        }),
+    )
 
     def average_communication(self, obj):
         return Feedback.objects.filter(recipient=obj).aggregate(Avg('communication'))['communication__avg']
