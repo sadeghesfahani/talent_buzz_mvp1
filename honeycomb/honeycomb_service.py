@@ -20,7 +20,7 @@ class HiveService:
         return hive.admins.all()
 
     @staticmethod
-    def get_hive(hive_id):
+    def get_hive(hive_id) -> Hive:
         return Hive.objects.get(id=hive_id)
 
 

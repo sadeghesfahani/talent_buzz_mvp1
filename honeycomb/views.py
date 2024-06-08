@@ -218,15 +218,16 @@ class MembershipAcceptView(APIView):
     )
     def post(self, request):
         serializer = MembershipAcceptSerializer(data=request.data)
+
         if serializer.is_valid():
             hive_request_id = serializer.validated_data['hive_request_id']
 
-            hive_request = self.hive_service.get_hive(hive_request_id)
-            if not hive_request:
+            hive = self.hive_service.get_hive(hive_request_id)
+            if not hive:
                 return Response({"message": "Hive Request not found"}, status=status.HTTP_404_NOT_FOUND)
-            if not hive_request.is_admin_by_user(request.user):
+            if not hive.is_admin_by_user(request.user):
                 return Response({"message": "You are not an admin of this hive"}, status=status.HTTP_403_FORBIDDEN)
 
-            hive_request.accept_application(hive_request.bee)
+            hive.accept_application(request.user.bee)
             return Response({"message": "Membership application accepted"}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
