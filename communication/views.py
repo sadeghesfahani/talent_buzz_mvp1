@@ -1,11 +1,14 @@
+from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from rest_framework import viewsets, permissions
 from rest_framework.exceptions import ValidationError
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
-from .models import Conversation, Message
-from .permissions import IsParticipantOrPublicHive, IsMessageSenderOrParticipant
+from .models import Conversation, Message, Notification
+from .permissions import IsParticipantOrPublicHive, IsMessageSenderOrParticipant, IsOwner
 from .serializers import MessageSerializer, ConversationListSerializer, \
-    ConversationDetailSerializer
+    ConversationDetailSerializer, NotificationSerializer
 
 
 class ConversationViewSet(viewsets.ModelViewSet):
@@ -43,3 +46,32 @@ class MessageViewSet(viewsets.ModelViewSet):
         if not conversation.participants.filter(id=self.request.user.id).exists():
             raise ValidationError("You are not a participant in this conversation.")
         serializer.save(sender=self.request.user)
+
+
+class RaiseValidationError:
+    pass
+
+
+class NotificationViewSet(viewsets.ModelViewSet):
+    queryset = Notification.objects.all()
+    serializer_class = NotificationSerializer
+    permission_classes = [IsAuthenticated, IsOwner]
+
+    def list(self, request, *args, **kwargs):
+        queryset = Notification.objects.filter(user=self.request.user)
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def perform_create(self, serializer):
+        raise PermissionDenied("Notifications cannot be created directly.")
+
+    def perform_update(self, serializer):
+        # Ensure only the 'read' field can be updated
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+

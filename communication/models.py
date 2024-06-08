@@ -26,3 +26,16 @@ class Message(models.Model):
 
     def __str__(self):
         return f"Message from {self.sender} at {self.timestamp}"
+
+
+class Notification(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='notifications', on_delete=models.CASCADE)
+    message = models.TextField()
+    read = models.BooleanField(default=False)
+    notification_type = models.CharField(max_length=100)
+    notification_channel = models.CharField(max_length=100)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    change_history = HistoricalRecords()
+
+    def __str__(self):
+        return f"Notification for {self.user}"
