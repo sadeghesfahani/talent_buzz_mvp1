@@ -1,7 +1,9 @@
 from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
+from django.db.models import Avg
 
+from feedback.models import Feedback
 from library.constants import REGULAR_CHAR_LENGTH, URL_LENGTH, DECIMAL_MAX_DIGITS, DECIMAL_DECIMAL_PLACES, PHONE_LENGTH, \
     LONG_TEXT_LENGTH
 from library.validators import PHONE_REGEX
@@ -115,8 +117,20 @@ class User(AbstractBaseUser, PermissionsMixin):
         verbose_name_plural = 'users'
         ordering = ['-date_joined']
 
+    def get_feedback_aggregates(self):
+        feedbacks = Feedback.objects.filter(user=self)
+        aggregate_data = feedbacks.aggregate(
+            avg_communication=Avg('communication'),
+            avg_quality_of_work=Avg('quality_of_work'),
+            avg_punctuality=Avg('punctuality'),
+            avg_overall_satisfaction=Avg('overall_satisfaction'),
+        )
+        return aggregate_data
+
     def __str__(self):
         return self.email
+
+
 
 
 class Skill(models.Model):

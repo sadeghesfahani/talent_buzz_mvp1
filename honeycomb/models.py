@@ -30,7 +30,7 @@ class Hive(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField()
     hive_type = models.CharField(max_length=10, choices=HIVE_TYPE_CHOICES)
-    admins = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='admin_hives', blank=True, null=True)
+    admins = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='admin_hives', blank=True)
     hive_requirements = models.TextField()
     hive_bees = models.ManyToManyField('Bee', through='Membership')
     is_public = models.BooleanField(default=False)

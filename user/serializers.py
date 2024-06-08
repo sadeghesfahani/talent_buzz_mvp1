@@ -34,6 +34,11 @@ class UserSerializer(serializers.ModelSerializer):
     company_details = CompanyDetailsSerializer(required=False)
     freelancer_details = FreelancerDetailsSerializer(required=False)
     addresses = AddressSerializer(many=True, required=False)
+    feedback_aggregates = serializers.SerializerMethodField()
+
+    @staticmethod
+    def get_feedback_aggregates(obj):
+        return obj.get_feedback_aggregates()
 
     class Meta:
         model = User
