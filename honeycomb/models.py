@@ -35,6 +35,7 @@ class Hive(models.Model):
     hive_bees = models.ManyToManyField('Bee', through='Membership')
     is_public = models.BooleanField(default=False)
     documents = models.ManyToManyField(COMMON_DOCUMENT_MODEL, related_name='hive_documents', blank=True)
+    status = models.CharField(max_length=255, blank=True)
     change_history = HistoricalRecords()
 
     def submit_membership_application(self, bee: 'Bee') -> Union['Membership', 'HiveRequest']:
