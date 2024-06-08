@@ -110,6 +110,12 @@ class MembershipViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_class = MembershipFilter
 
+    def get_queryset(self):
+        user = self.request.user
+        print(Membership.objects.filter(bee__user=user))
+        print(Membership.objects.filter())
+        return Membership.objects.filter(bee__user=user)
+
 
 class NectarViewSet(viewsets.ModelViewSet):
     queryset = Nectar.objects.all()

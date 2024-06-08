@@ -4,19 +4,24 @@ from user.serializers import UserSerializer
 from .models import Hive, Bee, Membership, Nectar, HiveRequest, Contract, Report
 
 
-class HiveSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Hive
-        fields = '__all__'
-
-
 class BeeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Bee
         fields = '__all__'
 
 
+class HiveSerializer(serializers.ModelSerializer):
+    admins = UserSerializer(many=True, read_only=True)
+    hive_bees = BeeSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Hive
+        fields = '__all__'
+
+
 class MembershipSerializer(serializers.ModelSerializer):
+    hive = HiveSerializer(read_only=True)
+
     class Meta:
         model = Membership
         fields = '__all__'
