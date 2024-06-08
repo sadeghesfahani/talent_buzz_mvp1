@@ -1,9 +1,10 @@
 import uuid
+from typing import Union
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import Sum
+from django.db.models import Sum, QuerySet
 from django.utils import timezone
 from simple_history.models import HistoricalRecords
 
@@ -36,7 +37,7 @@ class Hive(models.Model):
     documents = models.ManyToManyField(COMMON_DOCUMENT_MODEL, related_name='hive_documents', blank=True)
     change_history = HistoricalRecords()
 
-    def submit_membership_application(self, bee):
+    def submit_membership_application(self, bee: 'Bee') -> Union['Membership', 'HiveRequest']:
 
         if HiveRequest.objects.filter(hive=self, bee=bee, is_accepted=False).exists():
             raise ValidationError("A pending application already exists.")
@@ -48,7 +49,7 @@ class Hive(models.Model):
             return self.accept_application(bee)
         return application
 
-    def accept_application(self, bee):
+    def accept_application(self, bee: 'Bee') -> 'Membership':
         current_membership = Membership.objects.filter(hive=self, bee=bee).first()
         if current_membership:
             current_membership.is_accepted = True
@@ -57,23 +58,23 @@ class Hive(models.Model):
 
         return Membership.objects.create(is_accepted=True, hive=self, bee=bee)
 
-    def get_bees_ordered_by_honey_points(self):
+    def get_bees_ordered_by_honey_points(self) -> QuerySet['Bee']:
         return Bee.objects.filter(
             membership__hive=self
         ).annotate(
             total_honey_points=Sum('membership__honey_points')
         ).order_by('-total_honey_points')
 
-    def is_admin_by_user(self, user):
+    def is_admin_by_user(self, user: settings.AUTH_USER_MODEL) -> bool:
         return user in self.admins.all()
 
-    def is_admin_by_user_id(self, user_id):
+    def is_admin_by_user_id(self, user_id: int) -> bool:
         return self.admins.filter(id=user_id).exists()
 
-    def is_admin_by_bee(self, bee):
+    def is_admin_by_bee(self, bee: 'Bee') -> bool:
         return bee.user in self.admins.all()
 
-    def is_admin_by_bee_id(self, bee_id):
+    def is_admin_by_bee_id(self, bee_id: int) -> bool:
         bee = Bee.objects.get(id=bee_id)
         return self.admins.filter(id=bee.user.id).exists()
 
@@ -93,7 +94,7 @@ class Bee(models.Model):
     documents = models.ManyToManyField(COMMON_DOCUMENT_MODEL, related_name='bee_documents', blank=True)
     change_history = HistoricalRecords()
 
-    def submit_hive_application(self, hive):
+    def submit_hive_application(self, hive: 'Hive') -> Union['Membership', 'HiveRequest']:
         return hive.submit_membership_application(self)
 
     def __str__(self):
@@ -138,7 +139,7 @@ class Nectar(models.Model):
     documents = models.ManyToManyField(COMMON_DOCUMENT_MODEL, related_name='nectar_documents', blank=True)
     change_history = HistoricalRecords()
 
-    def submit_contract(self, bee):
+    def submit_contract(self, bee: 'Bee') -> 'Contract':
         if self.is_full():
             raise ValidationError(NECTAR_IS_FULL_ERROR)
         if Contract.objects.filter(nectar=self, bee=bee, is_accepted=False).exists():
@@ -147,7 +148,7 @@ class Nectar(models.Model):
             raise ValidationError("You are already working on this gig.")
         return Contract.objects.create(nectar=self, bee=bee, is_accepted=False)
 
-    def accept_application(self, contract, user):
+    def accept_application(self, contract: 'Contract', user: settings.AUTH_USER_MODEL) -> 'Contract':
         if self.is_full():
             raise ValidationError(NECTAR_IS_FULL_ERROR)
         if contract.nectar != self:
@@ -155,19 +156,19 @@ class Nectar(models.Model):
         contract.accept_application(user)
         return contract
 
-    def is_full(self):
+    def is_full(self) -> bool:
         return Contract.objects.filter(is_accepted=True, completed_at__isnull=True).count() >= self.required_bees
 
-    def get_hive_admins(self):
+    def get_hive_admins(self) -> QuerySet[settings.AUTH_USER_MODEL]:
         return self.nectar_hive.admins.all()
 
-    def get_active_contracts(self):
+    def get_active_contracts(self) -> QuerySet['Contract']:
         return Contract.objects.filter(nectar=self, is_accepted=True, completed_at__isnull=True)
 
-    def get_completed_contracts(self):
+    def get_completed_contracts(self) -> QuerySet['Contract']:
         return Contract.objects.filter(nectar=self, is_accepted=True, completed_at__isnull=False)
 
-    def get_pending_applications(self):
+    def get_pending_applications(self) -> QuerySet['Contract']:
         return Contract.objects.filter(nectar=self, is_accepted=False)
 
     def save(self, *args, **kwargs):
@@ -188,23 +189,23 @@ class HiveRequest(models.Model):
     documents = models.ManyToManyField(COMMON_DOCUMENT_MODEL, related_name='hive_request_documents', blank=True)
     change_history = HistoricalRecords()
 
-    def accept_application(self, user):
+    def accept_application(self, user: settings.AUTH_USER_MODEL) -> 'Membership':
         self._validate_application()
         self._check_permissions(user)
         self._deactivate_existing_membership()
         return self._accept_application()
 
-    def _validate_application(self):
+    def _validate_application(self) -> None:
         if self.is_accepted:
             raise ValidationError("Application is already accepted.")
 
-    def _check_permissions(self, user):
+    def _check_permissions(self, user) -> None:
         if self.hive.is_public:
-            return True
+            return None  # No need to check permissions for public hives
         if user not in self.hive.admins.all():
             raise ValidationError("Only hive admins can accept membership applications.")
 
-    def _deactivate_existing_membership(self):
+    def _deactivate_existing_membership(self) -> None:
         existing_membership = Membership.objects.filter(
             hive=self.hive,
             bee=self.bee,
@@ -216,13 +217,13 @@ class HiveRequest(models.Model):
             existing_membership.left_at = timezone.now()
             existing_membership.save()
 
-    def _accept_application(self):
+    def _accept_application(self) -> 'Membership':
         self.is_accepted = True
         self.accepted_at = timezone.now()
         self.save()
         return self._create_active_membership()
 
-    def _create_active_membership(self):
+    def _create_active_membership(self) -> 'Membership':
         membership = Membership.objects.get_or_create(
             hive=self.hive,
             bee=self.bee,
@@ -272,13 +273,13 @@ class Contract(models.Model):
 
 
 class ReportManager(models.Manager):
-    def for_hive(self, hive):
+    def for_hive(self, hive: 'Hive') -> QuerySet['Report']:
         return self.filter(hive=hive)
 
-    def for_nectar(self, nectar):
+    def for_nectar(self, nectar: 'Nectar') -> QuerySet['Report']:
         return self.filter(nectar=nectar)
 
-    def for_bee(self, bee):
+    def for_bee(self, bee: 'Bee') -> QuerySet['Report']:
         return self.filter(bee=bee)
 
 
