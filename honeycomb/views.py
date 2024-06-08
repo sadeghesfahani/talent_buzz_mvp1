@@ -113,8 +113,6 @@ class MembershipViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        print(Membership.objects.filter(bee__user=user))
-        print(Membership.objects.filter())
         return Membership.objects.filter(bee__user=user)
 
 
@@ -183,7 +181,6 @@ class HiveRequestViewSet(viewsets.ModelViewSet):
         return hive.is_admin_by_user(user)
 
 
-
 class ReportViewSet(viewsets.ModelViewSet):
     queryset = Report.objects.all()
     serializer_class = ReportSerializer
@@ -220,11 +217,15 @@ class ContractViewSet(viewsets.ModelViewSet):
     def perform_update(self, serializer):
         instance = self.get_object()
         if 'is_accepted' in serializer.validated_data and serializer.validated_data['is_accepted']:
-            NectarService.accept_nectar_application(instance)
+            NectarService.accept_nectar_application(instance, self.request.user.bee)
         return super().perform_update(serializer)
 
 
 class MembershipAcceptView(APIView):
+    MEMBERSHIP_ACCEPT_SUCCESS = "Membership application accepted"
+    HIVE_REQUEST_NOT_FOUND = "Hive Request not found"
+    NOT_HIVE_ADMIN = "You are not an admin of this hive"
+    FIELD_REQUIRED = "This field is required."
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.hive_service = HiveService()
@@ -233,10 +234,14 @@ class MembershipAcceptView(APIView):
     @swagger_auto_schema(
         request_body=MembershipAcceptSerializer,
         responses={
-            200: openapi.Response(description="Membership application accepted"),
-            400: openapi.Response(description="Bad Request"),
-            403: openapi.Response(description="Forbidden"),
-            404: openapi.Response(description="Not Found")
+            200: openapi.Response(description=MEMBERSHIP_ACCEPT_SUCCESS,
+                                  examples={"application/json": {"message": MEMBERSHIP_ACCEPT_SUCCESS}}),
+            400: openapi.Response(description="Bad Request",
+                                  examples={"application/json": {"hive_request_id": [FIELD_REQUIRED]}}),
+            403: openapi.Response(description="Forbidden",
+                                  examples={"application/json": {"message": NOT_HIVE_ADMIN}}),
+            404: openapi.Response(description="Not Found",
+                                  examples={"application/json": {"message": HIVE_REQUEST_NOT_FOUND}})
         }
     )
     def post(self, request):
@@ -247,10 +252,10 @@ class MembershipAcceptView(APIView):
 
             hive = self.hive_service.get_hive(hive_request_id)
             if not hive:
-                return Response({"message": "Hive Request not found"}, status=status.HTTP_404_NOT_FOUND)
+                return Response({"message": self.HIVE_REQUEST_NOT_FOUND}, status=status.HTTP_404_NOT_FOUND)
             if not hive.is_admin_by_user(request.user):
-                return Response({"message": "You are not an admin of this hive"}, status=status.HTTP_403_FORBIDDEN)
+                return Response({"message": self.NOT_HIVE_ADMIN}, status=status.HTTP_403_FORBIDDEN)
 
             hive.accept_application(request.user.bee)
-            return Response({"message": "Membership application accepted"}, status=status.HTTP_200_OK)
+            return Response({"message": self.MEMBERSHIP_ACCEPT_SUCCESS}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

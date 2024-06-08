@@ -256,7 +256,7 @@ class Contract(models.Model):
                 raise ValidationError("Cannot change the accepted rate of an accepted contract.")
         super().save(*args, **kwargs)
 
-    def accept_application(self, user):
+    def accept_application(self, user: Bee) -> None:
         if self.is_accepted:
             raise ValidationError("Application is already accepted.")
         if user not in self.nectar.nectar_hive.admins.all():
