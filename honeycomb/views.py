@@ -1,4 +1,5 @@
 from django.core.exceptions import ValidationError, PermissionDenied
+from django.db.models import Q
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
@@ -177,8 +178,30 @@ class HiveRequestViewSet(viewsets.ModelViewSet):
                 {"message": "Application submitted", "application": serialized_hive_request.data},
                 status=status.HTTP_201_CREATED)
 
-    def _is_user_admin_of_hive(self, hive, user):
+    @staticmethod
+    def _is_user_admin_of_hive(hive, user):
         return hive.is_admin_by_user(user)
+
+
+
+class ReportViewSet(viewsets.ModelViewSet):
+    queryset = Report.objects.all()
+    serializer_class = ReportSerializer
+    permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['hive', 'nectar', 'bee', 'created_at']
+
+    def get_queryset(self):
+        user = self.request.user
+        member_hive_ids = Membership.objects.filter(bee__user=user).values_list('hive_id', flat=True)
+        public_hive_ids = Hive.objects.filter(is_public=True).values_list('id', flat=True)
+        return Report.objects.filter(
+            Q(hive_id__in=member_hive_ids) |
+            Q(hive_id__in=public_hive_ids)
+        ).distinct()
+
+    def perform_create(self, serializer):
+        serializer.save()
 
 
 class ContractViewSet(viewsets.ModelViewSet):

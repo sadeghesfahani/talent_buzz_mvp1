@@ -70,6 +70,10 @@ class MembershipSubmitSerializer(serializers.Serializer):
 
 
 class ReportSerializer(serializers.ModelSerializer):
+    hive = HiveSerializer(read_only=True)
+    nectar = NectarSerializer(read_only=True)
+    bee = BeeSerializer(read_only=True)
+
     class Meta:
         model = Report
         fields = '__all__'
