@@ -172,11 +172,6 @@ class HiveRequestViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         raise MethodNotAllowed("DELETE method not allowed on this endpoint.")
 
-    def get_permissions(self):
-        permission_classes = [IsAuthenticated]
-        if self.action in ['update', 'partial_update', 'destroy']:
-            permission_classes.append(MethodNotAllowed)
-        return [permission() for permission in permission_classes]
 
     def _handle_application_response(self, application, user):
         if self._is_user_admin_of_hive(application.hive, user):
