@@ -270,5 +270,8 @@ class MembershipAcceptView(APIView):
                 return Response({"message": self.NOT_HIVE_ADMIN}, status=status.HTTP_403_FORBIDDEN)
 
             hive.accept_application(request.user.bee)
+            hive_request = HiveRequest.objects.get(id=hive_request_id)
+            hive_request.is_accepted = True
+            hive_request.save()
             return Response({"message": self.MEMBERSHIP_ACCEPT_SUCCESS}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
