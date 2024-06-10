@@ -1,3 +1,4 @@
+from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
 
 from .models import User, PersonalDetails, CompanyDetails, FreelancerDetails, Address
@@ -35,6 +36,14 @@ class UserSerializer(serializers.ModelSerializer):
     freelancer_details = FreelancerDetailsSerializer(required=False)
     addresses = AddressSerializer(many=True, required=False)
     feedback_aggregates = serializers.SerializerMethodField()
+
+    def get_bee(self, obj):
+        from honeycomb.serializers import BeeSerializer
+        try:
+            bee = obj.bee
+        except ObjectDoesNotExist:
+            return None
+        return BeeSerializer(bee).data
 
     @staticmethod
     def get_feedback_aggregates(obj):
