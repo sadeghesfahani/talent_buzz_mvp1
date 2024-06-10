@@ -155,8 +155,11 @@ class HiveRequestViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         hive = serializer.validated_data['hive']
         bee = serializer.validated_data['bee']
+        motivation = serializer.validated_data['motivation']
         try:
             application = HiveService.submit_membership_application(hive, bee)
+            application.motivation = motivation
+            application.save()
             return self._handle_application_response(application, self.request.user)
         except NotFound as e:
             raise ValidationError({"message": str(e)})
