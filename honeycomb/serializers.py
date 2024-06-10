@@ -61,6 +61,8 @@ class HiveWiThDetailsSerializer(serializers.ModelSerializer):
 
 
 class HiveRequestSerializer(serializers.ModelSerializer):
+    bee = BeeWithDetailSerializer(read_only=True)
+
     class Meta:
         model = HiveRequest
         fields = '__all__'
