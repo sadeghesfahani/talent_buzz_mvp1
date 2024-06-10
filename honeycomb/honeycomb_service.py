@@ -1,6 +1,6 @@
 from django.core.exceptions import ValidationError
 
-from .models import HiveRequest, Contract, Hive
+from .models import HiveRequest, Contract, Hive, Membership
 
 
 class HiveService:
@@ -8,11 +8,14 @@ class HiveService:
     def submit_membership_application(hive, bee):
         if HiveRequest.objects.filter(hive=hive, bee=bee, is_accepted=False).exists():
             raise ValidationError("A pending application already exists.")
+        if Membership.objects.filter(hive=hive, bee=bee).exists():
+            raise ValidationError("The bee is already a member of the hive.")
+        # todo: more validation is needed, e.g. bee is not already a member of the hive
         application = HiveRequest.objects.create(hive=hive, bee=bee)
         return application
 
     @staticmethod
-    def accept_membership_application(application,user):
+    def accept_membership_application(application, user):
         application.accept_application(user)
 
     @staticmethod
