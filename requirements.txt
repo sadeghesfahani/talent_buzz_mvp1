@@ -3,6 +3,7 @@ Django==5.0.6
 django-cors-headers==4.3.1
 django-filter==24.2
 django-simple-history==3.7.0
+django-taggit==5.0.1
 djangorestframework==3.15.1
 djangorestframework-simplejwt==5.3.1
 drf-yasg==1.21.7
