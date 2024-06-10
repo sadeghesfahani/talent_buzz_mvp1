@@ -46,6 +46,7 @@ THIRD_PARTY_APPS = [
     'simple_history',
     'rest_framework_simplejwt',
     'django_filters',
+    'taggit',
 ]
 
 CUSTOM_APPS = ['user', 'honeycomb', 'authentication', 'common', 'communication', 'feedback','task']

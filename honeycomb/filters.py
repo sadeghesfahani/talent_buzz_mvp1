@@ -1,15 +1,23 @@
 import django_filters
+from taggit.models import Tag
 
 from .models import Hive, Bee, Nectar, Membership, Contract, HiveRequest
 
 
 class HiveFilter(django_filters.FilterSet):
+    tags = django_filters.ModelMultipleChoiceFilter(
+        field_name='tags__name',
+        to_field_name='name',
+        queryset=Tag.objects.all()
+    )
+
     class Meta:
         model = Hive
         fields = {
             'name': ['exact', 'icontains'],
             'hive_type': ['exact'],
             'is_public': ['exact'],
+            'tags': ['exact'],
         }
 
 
@@ -23,6 +31,12 @@ class BeeFilter(django_filters.FilterSet):
 
 
 class NectarFilter(django_filters.FilterSet):
+    tags = django_filters.ModelMultipleChoiceFilter(
+        field_name='tags__name',
+        to_field_name='name',
+        queryset=Tag.objects.all()
+    )
+
     class Meta:
         model = Nectar
         fields = {
@@ -31,6 +45,7 @@ class NectarFilter(django_filters.FilterSet):
             'is_public': ['exact'],
             'price': ['lt', 'gt'],
             'deadline': ['lt', 'gt'],
+            'tags': ['exact'],
         }
 
 

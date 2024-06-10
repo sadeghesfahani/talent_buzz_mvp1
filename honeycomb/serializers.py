@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from taggit.serializers import TagListSerializerField
 
 from common.serializers import DocumentSerializer
 from user.serializers import UserSerializer
@@ -12,6 +13,7 @@ class BeeSerializer(serializers.ModelSerializer):
 
 
 class HiveSerializer(serializers.ModelSerializer):
+    tags = TagListSerializerField()
     admins = UserSerializer(many=True, read_only=True)
     hive_bees = BeeSerializer(many=True, read_only=True)
 
@@ -29,6 +31,7 @@ class MembershipSerializer(serializers.ModelSerializer):
 
 
 class NectarSerializer(serializers.ModelSerializer):
+    tags = TagListSerializerField()
     documents = serializers.ListField(
         child=serializers.FileField(max_length=100000, allow_empty_file=False, use_url=False),
         write_only=True,

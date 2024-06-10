@@ -7,6 +7,7 @@ from django.db import models
 from django.db.models import Sum, QuerySet
 from django.utils import timezone
 from simple_history.models import HistoricalRecords
+from taggit.managers import TaggableManager
 
 from communication.models import Conversation
 
@@ -36,6 +37,7 @@ class Hive(models.Model):
     is_public = models.BooleanField(default=False)
     documents = models.ManyToManyField(COMMON_DOCUMENT_MODEL, related_name='hive_documents', blank=True)
     status = models.CharField(max_length=255, blank=True)
+    tags = TaggableManager()
     change_history = HistoricalRecords()
 
     def submit_membership_application(self, bee: 'Bee') -> Union['Membership', 'HiveRequest']:
@@ -141,6 +143,7 @@ class Nectar(models.Model):
     required_bees = models.PositiveIntegerField(blank=True, null=True, default=1)  # Number of freelancers required
     status = models.CharField(max_length=255, blank=True)  # Status of the gig
     documents = models.ManyToManyField(COMMON_DOCUMENT_MODEL, related_name='nectar_documents', blank=True)
+    tags = TaggableManager()
     change_history = HistoricalRecords()
 
     def submit_contract(self, bee: 'Bee') -> 'Contract':
