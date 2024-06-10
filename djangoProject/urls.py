@@ -20,6 +20,11 @@ from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework import permissions
 
+from django.urls import path
+
+def trigger_error(request):
+    division_by_zero = 1 / 0
+
 schema_view = get_schema_view(
     openapi.Info(
         title="AI",
@@ -40,5 +45,6 @@ urlpatterns = [
     path('comunication/', include('communication.urls')),
     path('feedback/', include('feedback.urls')),
     path('task/', include('task.urls')),
+    path('sentry-debug/', trigger_error),
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
 ]
