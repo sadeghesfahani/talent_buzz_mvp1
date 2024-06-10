@@ -118,7 +118,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         ordering = ['-date_joined']
 
     def get_feedback_aggregates(self):
-        feedbacks = Feedback.objects.filter(user=self)
+        feedbacks = Feedback.objects.filter(author=self)
         aggregate_data = feedbacks.aggregate(
             avg_communication=Avg('communication'),
             avg_quality_of_work=Avg('quality_of_work'),

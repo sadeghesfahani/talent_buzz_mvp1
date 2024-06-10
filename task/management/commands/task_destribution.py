@@ -10,5 +10,5 @@ class Command(BaseCommand):
         active_tasks = Task.objects.filter(is_completed=False)
         for task in active_tasks:
             if task.is_searching_for_bees():
-                task.reassign_task()
+                task.assign_task()
                 self.stdout.write(self.style.SUCCESS(f'Task {task.title} reassigned'))

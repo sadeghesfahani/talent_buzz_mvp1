@@ -1,5 +1,8 @@
-from rest_framework import viewsets
+from django.core.exceptions import ValidationError
+from rest_framework import viewsets, status
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
 from honeycomb.models import Bee
 from task.models import Task, TaskAssignment
@@ -26,3 +29,12 @@ class TaskAssignmentViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         bee = Bee.objects.get(user=self.request.user)
         return TaskAssignment.objects.filter(bee=bee)
+
+    @action(detail=True, methods=['get'], permission_classes=[IsAuthenticated, IsTaskAssignmentOwner])
+    def accept(self, request, pk=None):
+        assignment = self.get_object()
+        try:
+            assignment.accept()
+            return Response({'status': 'success', 'assignment_id': assignment.id}, status=status.HTTP_200_OK)
+        except ValidationError as e:
+            return Response({'status': 'error', 'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)

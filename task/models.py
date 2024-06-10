@@ -77,5 +77,8 @@ class TaskAssignment(models.Model):
             self.save()
             self.task.save()
 
+            if not self.task.is_searching_for_bees():
+                TaskAssignment.objects.filter(task=self.task, is_accepted=False).delete()
+
     def __str__(self):
         return f"{self.bee} -> {self.task}"
