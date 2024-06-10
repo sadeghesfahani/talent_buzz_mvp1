@@ -10,6 +10,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from common.models import Document
 from .filters import HiveFilter, BeeFilter, NectarFilter, MembershipFilter, ContractFilter, HiveRequestFilter
 from .honeycomb_service import NectarService, HiveService
 from .models import Hive, Bee, Membership, Nectar, HiveRequest, Contract, Report
@@ -122,6 +123,20 @@ class NectarViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
     filterset_class = NectarFilter
+
+    def perform_create(self, serializer):
+        documents = self.request.FILES.getlist('documents')
+        nectar = serializer.save()
+        for document in documents:
+            Document.objects.create(
+                user=self.request.user,
+                document=document,
+                description=f"Document for nectar {nectar.id}"
+            )
+            nectar.documents.add(document)
+        nectar.save()
+
+        return nectar
 
 
 class HiveRequestViewSet(viewsets.ModelViewSet):

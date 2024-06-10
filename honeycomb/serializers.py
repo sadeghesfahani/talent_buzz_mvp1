@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from common.serializers import DocumentSerializer
 from user.serializers import UserSerializer
 from .models import Hive, Bee, Membership, Nectar, HiveRequest, Contract, Report
 
@@ -28,6 +29,13 @@ class MembershipSerializer(serializers.ModelSerializer):
 
 
 class NectarSerializer(serializers.ModelSerializer):
+    documents = serializers.ListField(
+        child=serializers.FileField(max_length=100000, allow_empty_file=False, use_url=False),
+        write_only=True,
+        required=False
+    )
+    uploaded_documents = DocumentSerializer(many=True, read_only=True, source='documents')
+
     class Meta:
         model = Nectar
         fields = '__all__'
