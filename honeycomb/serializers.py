@@ -22,14 +22,6 @@ class HiveSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class MembershipSerializer(serializers.ModelSerializer):
-    hive = HiveSerializer(read_only=True)
-
-    class Meta:
-        model = Membership
-        fields = '__all__'
-
-
 class NectarSerializer(serializers.ModelSerializer):
     tags = TagListSerializerField()
     documents = serializers.ListField(
@@ -89,4 +81,13 @@ class ReportSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Report
+        fields = '__all__'
+
+
+class MembershipSerializer(serializers.ModelSerializer):
+    hive = HiveSerializer(read_only=True)
+    bee = BeeWithDetailSerializer(read_only=True)
+
+    class Meta:
+        model = Membership
         fields = '__all__'
