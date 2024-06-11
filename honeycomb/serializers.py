@@ -87,7 +87,21 @@ class ReportSerializer(serializers.ModelSerializer):
 class MembershipSerializer(serializers.ModelSerializer):
     hive = HiveSerializer(read_only=True)
     bee = BeeWithDetailSerializer(read_only=True)
+    assigned_tasks = serializers.SerializerMethodField()
+    task_assignments = serializers.SerializerMethodField()
 
     class Meta:
         model = Membership
         fields = '__all__'
+
+    def get_assigned_tasks(self, obj):
+        from task.models import Task
+        from task.serializers import TaskSerializer
+        tasks = Task.objects.filter(assigned_bees=obj.bee)
+        return TaskSerializer(tasks, many=True).data
+
+    def get_task_assignments(self, obj):
+        from task.models import TaskAssignment
+        from task.serializers import TaskAssignmentSerializer
+        task_assignments = TaskAssignment.objects.filter(bee=obj.bee, is_active=True)
+        return TaskAssignmentSerializer(task_assignments, many=True).data
