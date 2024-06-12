@@ -1,4 +1,5 @@
 import django_filters
+from django.db.models import Q
 from taggit.models import Tag
 
 from .models import Hive, Bee, Nectar, Membership, Contract, HiveRequest, Report
@@ -64,6 +65,7 @@ class ContractFilter(django_filters.FilterSet):
         model = Contract
         fields = {
             'nectar': ['exact'],
+            'nectar__nectar_hive': ['exact'],  # 'nectar__nectar_hive__id' is also possible
             'bee': ['exact'],
             'is_accepted': ['exact'],
             'applied_at': ['lt', 'gt'],

@@ -12,7 +12,8 @@ class HiveAdmin(SimpleHistoryAdmin):
     filter_horizontal = ('admins',)  # Removed 'hive_bees' from filter_horizontal
     fieldsets = (
         (None, {
-            'fields': ('name', 'description', 'hive_type', 'hive_requirements', 'admins', 'is_public', 'tags')
+            'fields': (
+            'name', 'description', 'hive_type', 'hive_requirements', 'admins', 'is_public', 'tags', 'documents')
         }),
     )
 
@@ -26,12 +27,13 @@ class BeeAdmin(SimpleHistoryAdmin):
 
 @admin.register(Membership)
 class MembershipAdmin(SimpleHistoryAdmin):
-    list_display = ('hive', 'bee', 'is_accepted', 'joined_at', 'left_at', 'honey_points')
+    list_display = ('hive', 'bee', 'is_accepted', 'left_at', 'honey_points')
     search_fields = ('hive__name', 'bee__user__email')
-    list_filter = ('is_accepted', 'joined_at', 'left_at')
+    list_filter = ('is_accepted', 'left_at')
+    exclude = ('joined_at',)
     fieldsets = (
         (None, {
-            'fields': ('hive', 'bee', 'is_accepted', 'joined_at', 'left_at', 'honey_points', 'tags')
+            'fields': ('hive', 'bee', 'is_accepted', 'left_at', 'honey_points')
         }),
     )
 
