@@ -1,7 +1,7 @@
 import django_filters
 from taggit.models import Tag
 
-from .models import Hive, Bee, Nectar, Membership, Contract, HiveRequest
+from .models import Hive, Bee, Nectar, Membership, Contract, HiveRequest, Report
 
 
 class HiveFilter(django_filters.FilterSet):
@@ -85,3 +85,13 @@ class HiveRequestFilter(django_filters.FilterSet):
     class Meta:
         model = HiveRequest
         fields = ['hive', 'bee', 'is_accepted', 'applied_at', 'accepted_at']
+
+
+class ReportsFilter(django_filters.FilterSet):
+    class Meta:
+        model = Report
+        fields = {
+            'hive': ['exact'],
+            'bee': ['exact'],
+            'nectar': ['exact'],
+        }
