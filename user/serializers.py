@@ -36,6 +36,7 @@ class UserSerializer(serializers.ModelSerializer):
     freelancer_details = FreelancerDetailsSerializer(required=False)
     addresses = AddressSerializer(many=True, required=False)
     feedback_aggregates = serializers.SerializerMethodField()
+    bee = serializers.SerializerMethodField()
 
     def get_bee(self, obj):
         from honeycomb.serializers import BeeSerializer
