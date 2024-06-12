@@ -12,7 +12,8 @@ class HiveAdmin(SimpleHistoryAdmin):
     filter_horizontal = ('admins',)  # Removed 'hive_bees' from filter_horizontal
     fieldsets = (
         (None, {
-            'fields': ('name', 'description', 'hive_type', 'hive_requirements', 'admins', 'is_public', 'tags')
+            'fields': (
+            'name', 'description', 'hive_type', 'hive_requirements', 'admins', 'is_public', 'tags', 'documents')
         }),
     )
 

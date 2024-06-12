@@ -49,7 +49,7 @@ THIRD_PARTY_APPS = [
     'taggit',
 ]
 
-CUSTOM_APPS = ['user', 'honeycomb', 'authentication', 'common', 'communication', 'feedback','task']
+CUSTOM_APPS = ['user', 'honeycomb', 'authentication', 'common', 'communication', 'feedback','task','ai']
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + CUSTOM_APPS
 
 MIDDLEWARE = [
@@ -193,3 +193,4 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
 ]
 CORS_ALLOWED_CREDENTIALS = True
+OPEN_AI_API_KEY = 'sk-proj-gqcrvHgw1ke9WLJkU1c5T3BlbkFJDPwfMOt3eRjRXPaCD8aG'
