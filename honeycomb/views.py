@@ -11,7 +11,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from common.models import Document
-from .filters import HiveFilter, BeeFilter, NectarFilter, MembershipFilter, ContractFilter, HiveRequestFilter
+from .filters import HiveFilter, BeeFilter, NectarFilter, MembershipFilter, ContractFilter, HiveRequestFilter, ReportsFilter
 from .honeycomb_service import NectarService, HiveService
 from .models import Hive, Bee, Membership, Nectar, HiveRequest, Contract, Report
 from .serializers import HiveSerializer, BeeSerializer, MembershipSerializer, NectarSerializer, HiveRequestSerializer, \
@@ -199,8 +199,7 @@ class ReportViewSet(viewsets.ModelViewSet):
     serializer_class = ReportSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['hive', 'nectar', 'bee', 'created_at']
-
+    filterset_class = ReportsFilter
     def get_queryset(self):
         user = self.request.user
         member_hive_ids = Membership.objects.filter(bee__user=user).values_list('hive_id', flat=True)
