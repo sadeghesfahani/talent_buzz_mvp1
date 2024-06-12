@@ -9,12 +9,14 @@ https://docs.djangoproject.com/en/5.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
+import os
+from dotenv import load_dotenv
 from datetime import timedelta
 from pathlib import Path
 import sentry_sdk
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
+load_dotenv()
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
@@ -193,4 +195,4 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
 ]
 CORS_ALLOWED_CREDENTIALS = True
-OPEN_AI_API_KEY = 'sk-proj-gqcrvHgw1ke9WLJkU1c5T3BlbkFJDPwfMOt3eRjRXPaCD8aG'
+OPEN_AI_API_KEY = os.environ.get('OPEN_AI_API_KEY','')
