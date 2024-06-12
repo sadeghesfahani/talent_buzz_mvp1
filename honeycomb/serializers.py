@@ -61,9 +61,14 @@ class HiveRequestSerializer(serializers.ModelSerializer):
 
 
 class ContractSerializer(serializers.ModelSerializer):
+    bees_with_detail = serializers.SerializerMethodField()
+
     class Meta:
         model = Contract
         fields = '__all__'
+
+    def get_bees_with_detail(self, obj):
+        return BeeWithDetailSerializer(obj.bee).data
 
 
 class MembershipAcceptSerializer(serializers.Serializer):
