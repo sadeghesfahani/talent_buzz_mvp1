@@ -94,7 +94,7 @@ class Hive(models.Model):
 
 class Bee(models.Model):
     DEFAULT_BEE_TYPE = 'worker'
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)  # User associated with this bee
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, related_name='bee', on_delete=models.CASCADE)  # User associated with this bee
     bee_bio = models.TextField(blank=True)
     bee_type = models.CharField(max_length=10, choices=BEE_TYPE_CHOICES, default=DEFAULT_BEE_TYPE)
     documents = models.ManyToManyField(COMMON_DOCUMENT_MODEL, related_name='bee_documents', blank=True)
@@ -298,6 +298,7 @@ class Report(models.Model):
     content = models.TextField()
     documents = models.ManyToManyField(COMMON_DOCUMENT_MODEL, related_name='report_documents', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=255, blank=True)
 
     objects = ReportManager()
 
