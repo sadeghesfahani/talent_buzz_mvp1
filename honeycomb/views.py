@@ -224,8 +224,7 @@ class ContractViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         nectar = serializer.validated_data['nectar']
         applicant = serializer.validated_data['bee']
-        NectarService.submit_nectar_application(nectar, applicant)
-        return super().perform_create(serializer)
+        return NectarService.submit_nectar_application(nectar, applicant)
 
     def perform_update(self, serializer):
         instance = self.get_object()
