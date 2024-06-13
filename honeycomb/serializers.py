@@ -68,8 +68,8 @@ class ContractSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def get_bees_with_detail(self, obj):
-        if 'bee' in obj:
-            return BeeWithDetailSerializer(obj['bee']).data
+        if obj.bee is not None:
+            return BeeWithDetailSerializer(obj.bee).data
         else:
             return None  # Or provide some default data
 
