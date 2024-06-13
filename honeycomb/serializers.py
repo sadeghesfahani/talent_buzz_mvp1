@@ -21,6 +21,19 @@ class HiveSerializer(serializers.ModelSerializer):
         model = Hive
         fields = '__all__'
 
+    def create(self, validated_data):
+        tags = validated_data.pop('tags', [])
+        print(tags)
+        hive = super().create(validated_data)
+        hive.tags.set(tags)  # Assuming tags are a ManyToMany field
+        return hive
+
+    def update(self, instance, validated_data):
+        tags = validated_data.pop('tags', [])
+        instance = super().update(instance, validated_data)
+        instance.tags.set(tags)  # Assuming tags are a ManyToMany field
+        return instance
+
 
 class NectarSerializer(serializers.ModelSerializer):
     tags = TagListSerializerField()
