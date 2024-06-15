@@ -1,0 +1,15 @@
+version: "3.8"
+
+
+services:
+  redis:
+    image: redis:7
+    restart: always
+    command: [ "redis-server", "--appendonly", "yes" ]
+    hostname: redis
+    volumes:
+      - talent_buzz_redis_data:/data
+    ports:
+      - "6379:6379"
+volumes:
+  talent_buzz_redis_data:

@@ -1,10 +1,13 @@
 # myapp/signals.py
+from django.conf import settings
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
+from openai import OpenAI
 
 from communication.models import Notification
 from .models import Hive, Membership, Nectar, HiveRequest, Contract, Report
-
+from honeycomb.tasks import sync_hive_vector_store
+client = OpenAI(api_key=settings.OPEN_AI_API_KEY)
 
 @receiver(post_save, sender=Hive)
 def hive_created(sender, instance, created, **kwargs):
@@ -136,3 +139,16 @@ def contract_deleted(sender, instance, **kwargs):
             message=f"The contract for nectar '{instance.nectar.nectar_title}' by '{instance.bee.user.email}' has been deleted.",
             notification_type='warning'
         )
+
+
+
+@receiver(post_save, sender=Hive)
+def sync_vector_store(sender, instance, created, **kwargs):
+    if created:
+        # Create vector store if it does not exist
+        vector_store = client.beta.vector_stores.create(name=f"{instance.name} Vector Store")
+        instance.vector_store_id = vector_store.id
+        instance.save()
+    else:
+        # Sync vector store if it already exists
+        sync_hive_vector_store.delay(vector_store_id=instance.vector_store_id, hive_id=instance.id)

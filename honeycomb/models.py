@@ -13,6 +13,7 @@ from taggit.managers import TaggableManager
 
 from communication.models import Conversation
 from honeycomb.selectors import get_hive_related_documents
+from honeycomb.tasks import sync_hive_vector_store
 
 client = OpenAI(api_key=settings.OPEN_AI_API_KEY)
 HIVE_TYPE_CHOICES = [
@@ -89,62 +90,10 @@ class Hive(models.Model):
     def get_hive_bees(self) -> QuerySet['Bee']:
         return Bee.objects.filter(membership__hive=self, membership__is_accepted=True)
 
-    def sync_vector_store(self):
-        # Get the vector store, check the file_ids, add new files if any
-        related_documents = get_hive_related_documents(self.id)
-        vector_store = client.beta.vector_stores.retrieve(self.vector_store_id)
-
-        supported_extensions = ['pdf', 'txt', 'docx']  # Add all supported extensions here
-
-        file_ids = []
-        for document in related_documents:
-            file_extension = document.document.file.name.split('.')[-1].lower()
-            print("file extension", file_extension)
-            if file_extension not in supported_extensions:
-                print(document.document.file_id)
-
-                print(f"Unsupported file extension: {file_extension} for document {document.document.file.name} - {document.file_id}")
-
-                continue
-            # print(client.beta.vector_stores.files.retrieve(file_id=document.file_id, vector_store_id=self.vector_store_id))
-            file_ids.append(document.file_id)
-            try:
-                print(client.beta.vector_stores.files.retrieve(file_id=document.file_id,
-                                                           vector_store_id=self.vector_store_id))
-            except Exception as e:
-                print(f"Failed to retrieve file {document.file_id} from vector store {self.vector_store_id}: {e}")
-
-        # Distinct file_ids
-        file_ids = list(set(file_ids))
-        if file_ids:
-            try:
-                for file_id in file_ids:
-                    file = client.beta.vector_stores.files.create_and_poll(vector_store_id=self.vector_store_id, file_id=file_id)
-                    while (file.status == 'in_progress'):
-                        print(f"File {file_id} status: {file.status}")
-                    print(file.__dict__)
-                # print(client.beta.vector_stores.file_batches.create(vector_store_id=self.vector_store_id, file_ids=file_ids))
-            except Exception as e:
-                print(f"Failed to add files to vector store: {e}")
-                print(f"Vector Store ID: {self.vector_store_id}")
-                print(f"File IDs: {file_ids}")
-
-
-        print(vector_store)
-        print(related_documents)
-        print(file_ids)
-
-    # Add this function to handle file extension validation
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         Conversation.objects.get_or_create(hive=self, tag="general")
-        if not self.vector_store_id:
-            vector_store = client.beta.vector_stores.create(name=f"{self.name} Vector Store")
-            self.vector_store_id = vector_store.id
-            self.save()
-        else:
-            self.sync_vector_store()
 
     def __str__(self):
         return self.name

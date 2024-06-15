@@ -1,5 +1,7 @@
 from django.conf import settings
 from django.db import models
+from django.db.models.signals import pre_save, post_save
+from django.dispatch import receiver
 from openai import OpenAI
 
 client = OpenAI(api_key=settings.OPEN_AI_API_KEY)
@@ -23,6 +25,15 @@ class Document(models.Model):
             )
             self.file_id = uploaded_file.id
         super().save(force_insert, force_update, using, update_fields)
+
+
+@receiver(post_save, sender=Document)
+def set_file_id(sender, instance, **kwargs):
+    if not instance.file_id and instance.document:
+        uploaded_file = client.files.create(
+            file=(instance.document.file.name, instance.document.file.open('rb').read()), purpose="assistants"
+        )
+        instance.file_id = uploaded_file.id
 class Photo(models.Model):
     user = models.ForeignKey('user.User', on_delete=models.CASCADE)
     photo = models.ImageField(upload_to='photos')

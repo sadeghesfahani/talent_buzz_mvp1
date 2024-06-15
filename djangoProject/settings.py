@@ -10,10 +10,12 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 import os
-from dotenv import load_dotenv
 from datetime import timedelta
 from pathlib import Path
+
 import sentry_sdk
+from dotenv import load_dotenv
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv()
@@ -51,7 +53,7 @@ THIRD_PARTY_APPS = [
     'taggit',
 ]
 
-CUSTOM_APPS = ['user', 'honeycomb', 'authentication', 'common', 'communication', 'feedback','task','ai']
+CUSTOM_APPS = ['user', 'honeycomb', 'authentication', 'common', 'communication', 'feedback', 'task', 'ai']
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + CUSTOM_APPS
 
 MIDDLEWARE = [
@@ -195,4 +197,12 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
 ]
 CORS_ALLOWED_CREDENTIALS = True
-OPEN_AI_API_KEY = os.environ.get('OPEN_AI_API_KEY','')
+OPEN_AI_API_KEY = os.environ.get('OPEN_AI_API_KEY', '')
+
+# Celery settings
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'UTC'
