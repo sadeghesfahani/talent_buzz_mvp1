@@ -144,6 +144,8 @@ def contract_deleted(sender, instance, **kwargs):
 
 @receiver(post_save, sender=Hive)
 def sync_vector_store(sender, instance, created, **kwargs):
+    if settings.IS_TEST:
+        return  # Skip signal handling during tests
     if created:
         # Create vector store if it does not exist
         vector_store = client.beta.vector_stores.create(name=f"{instance.name} Vector Store")

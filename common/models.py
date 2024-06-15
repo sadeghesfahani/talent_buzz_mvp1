@@ -29,6 +29,8 @@ class Document(models.Model):
 
 @receiver(post_save, sender=Document)
 def set_file_id(sender, instance, **kwargs):
+    if settings.IS_TEST:
+        return  # Skip signal handling during tests
     if not instance.file_id and instance.document:
         uploaded_file = client.files.create(
             file=(instance.document.file.name, instance.document.file.open('rb').read()), purpose="assistants"
