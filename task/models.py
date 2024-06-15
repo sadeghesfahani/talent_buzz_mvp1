@@ -2,21 +2,20 @@ from django.db import models
 from django.db.models.functions import datetime
 from simple_history.models import HistoricalRecords
 
-from honeycomb.models import Bee
 
 
 class BeeSelection(models.Model):
-    bees = models.ManyToManyField(Bee, related_name='selected_for', blank=True)
+    bees = models.ManyToManyField("honeycomb.Bee", related_name='selected_for', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    removed_bees = models.ManyToManyField(Bee, related_name='removed_from_selection', blank=True)
+    removed_bees = models.ManyToManyField("honeycomb.Bee", related_name='removed_from_selection', blank=True)
     history = HistoricalRecords()
 
-    def add_bee(self, bee: Bee):
+    def add_bee(self, bee: 'Bee'):
         self.bees.add(bee)
         self.save()
 
-    def remove_bee(self, bee: Bee):
+    def remove_bee(self, bee: 'Bee'):
         self.bees.remove(bee)
         self.removed_bees.add(bee)
         self.save()
@@ -39,6 +38,7 @@ class Task(models.Model):
     priority = models.IntegerField(default=1)
     urgency = models.IntegerField(default=1)
     status = models.CharField(max_length=255, default='pending')
+    documents = models.ManyToManyField('common.Document', related_name='tasks', blank=True)
     change_history = HistoricalRecords()
 
     def __str__(self):

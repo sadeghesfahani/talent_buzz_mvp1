@@ -1,0 +1,280 @@
+[
+  {
+    'name': 'Omnitechs',
+    'description': 'Omni Techs, based in Groningen, is a forward-thinking holding company driven by a mission to leverage technology for global betterment. Founded by Seyed Sina Sadegh Esfahani, the company is currently focused on its flagship project, Talent-Buzz.com. This innovative platform addresses the talent shortage in the Netherlands and the EU by offering freelancing, staffing, and educational solutions. Omni Techs envisions a world free from poverty and regional discrimination, aiming to provide ample job opportunities and nurture talent through comprehensive educational programs. As part of an incubator program, Omni Techs benefits from expert courses, mentorship, and extensive networking opportunities to fuel its mission and vision.',
+    'admins': [
+      {
+        'personal_details': {
+          'first_name': 'nooshin',
+          'last_name': 'hamzeh',
+          'measures': []
+        },
+        'company_details': {
+          'company_name': 'omnitechs',
+          'company_description': '',
+          'company_specialities': [],
+          'company_social_media': {}
+        },
+        'freelancer_details': None
+      },
+      {
+        'personal_details': {
+          'first_name': 'mohammad',
+          'last_name': 'yousefi',
+          'measures': []
+        },
+        'company_details': {
+          'company_name': 'Omnitechs',
+          'company_description': '',
+          'company_specialities': [],
+          'company_social_media': {}
+        },
+        'freelancer_details': {
+          'id': 1,
+          'hourly_rate': '16.00',
+          'experience': [],
+          'education': [],
+          'certification': [],
+          'portfolio': [],
+          'user': 2,
+          'skills': []
+        }
+      },
+      {
+        'personal_details': {
+          'first_name': 'sina',
+          'last_name': 'esfahani',
+          'measures': []
+        },
+        'company_details': None,
+        'freelancer_details': None
+      }
+    ],
+    'hive_bees': [
+      {
+        'id': 1,
+        'user': {
+          'personal_details': {
+            'first_name': 'sina',
+            'last_name': 'esfahani',
+            'measures': []
+          },
+          'company_details': None,
+          'freelancer_details': None
+        },
+        'bee_bio': 'full stack developer with 5 years of experience',
+        'bee_type': 'worker',
+        'documents': []
+      },
+      {
+        'id': 2,
+        'user': {
+          'personal_details': {
+            'first_name': 'nooshin',
+            'last_name': 'hamzeh',
+            'measures': []
+          },
+          'company_details': {
+            'company_name': 'omnitechs',
+            'company_description': '',
+            'company_specialities': [],
+            'company_social_media': {}
+          },
+          'freelancer_details': None
+        },
+        'bee_bio': 'product manager',
+        'bee_type': 'worker',
+        'documents': []
+      },
+      {
+        'id': 4,
+        'user': {
+          'personal_details': {
+            'first_name': 'Ayda',
+            'last_name': 'enayati',
+            'measures': []
+          },
+          'company_details': {
+            'company_name': 'JV corps',
+            'company_description': '',
+            'company_specialities': [],
+            'company_social_media': {}
+          },
+          'freelancer_details': {
+            'id': 2,
+            'hourly_rate': '15.00',
+            'experience': [],
+            'education': [],
+            'certification': [],
+            'portfolio': [],
+            'user': 4,
+            'skills': []
+          }
+        },
+        'bee_bio': '',
+        'bee_type': 'worker',
+        'documents': []
+      }
+    ],
+    'hive_requirements': 'Joining the Omni Techs team requires a blend of passion, expertise, and commitment to our mission of using technology to create positive global change. Ideal candidates are innovative thinkers with a strong background in their respective fields, whether in technology, business development, or education. We seek individuals who are collaborative, adaptable, and eager to contribute to our vision of eradicating poverty and regional discrimination through initiatives like Talent-Buzz.com. A proactive attitude, excellent problem-solving skills, and a desire to be part of a dynamic, purpose-driven team are essential. Additionally, alignment with our core values of integrity, inclusivity, and continuous learning is crucial for anyone looking to join our journey.',
+    'is_public': False,
+    'documents': [
+      {
+        'id': 1,
+        'file_id': 'file-mS8NB0jC3TwiGTFwNhh9ccEp',
+        'description': '',
+        'user': 1
+      }
+    ],
+    'tags': [
+      'tes1',
+      'test'
+    ]
+  },
+  {
+    'name': 'string',
+    'description': 'string',
+    'admins': [
+      {
+        'personal_details': {
+          'first_name': 'sina',
+          'last_name': 'esfahani',
+          'measures': []
+        },
+        'company_details': None,
+        'freelancer_details': None
+      }
+    ],
+    'hive_bees': [],
+    'hive_requirements': 'string',
+    'is_public': True,
+    'documents': [],
+    'tags': []
+  },
+  {
+    'name': 'string',
+    'description': 'string',
+    'admins': [
+      {
+        'personal_details': {
+          'first_name': 'sina',
+          'last_name': 'esfahani',
+          'measures': []
+        },
+        'company_details': None,
+        'freelancer_details': None
+      }
+    ],
+    'hive_bees': [],
+    'hive_requirements': 'string',
+    'is_public': True,
+    'documents': [],
+    'tags': [
+      's',
+      'r',
+      'i',
+      'g',
+      't',
+      'n'
+    ]
+  },
+  {
+    'name': 'string',
+    'description': 'string',
+    'admins': [
+      {
+        'personal_details': {
+          'first_name': 'sina',
+          'last_name': 'esfahani',
+          'measures': []
+        },
+        'company_details': None,
+        'freelancer_details': None
+      }
+    ],
+    'hive_bees': [],
+    'hive_requirements': 'string',
+    'is_public': True,
+    'documents': [],
+    'tags': [
+      's',
+      'r',
+      'i',
+      'g',
+      't',
+      'n'
+    ]
+  },
+  {
+    'name': 'string',
+    'description': 'string',
+    'admins': [
+      {
+        'personal_details': {
+          'first_name': 'sina',
+          'last_name': 'esfahani',
+          'measures': []
+        },
+        'company_details': None,
+        'freelancer_details': None
+      }
+    ],
+    'hive_bees': [],
+    'hive_requirements': 'string',
+    'is_public': True,
+    'documents': [],
+    'tags': [
+      's',
+      'r',
+      'i',
+      'g',
+      't',
+      'n'
+    ]
+  },
+  {
+    'name': 'string',
+    'description': 'string',
+    'admins': [
+      {
+        'personal_details': {
+          'first_name': 'sina',
+          'last_name': 'esfahani',
+          'measures': []
+        },
+        'company_details': None,
+        'freelancer_details': None
+      }
+    ],
+    'hive_bees': [],
+    'hive_requirements': 'string',
+    'is_public': True,
+    'documents': [],
+    'tags': [
+      'string'
+    ]
+  },
+  {
+    'name': 'string',
+    'description': 'string',
+    'admins': [
+      {
+        'personal_details': {
+          'first_name': 'sina',
+          'last_name': 'esfahani',
+          'measures': []
+        },
+        'company_details': None,
+        'freelancer_details': None
+      }
+    ],
+    'hive_bees': [],
+    'hive_requirements': 'string',
+    'is_public': True,
+    'documents': [],
+    'tags': [
+      'string',
+      'string2'
+    ]
+  }
+]

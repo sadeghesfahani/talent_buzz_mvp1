@@ -1,3 +1,4 @@
+from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 
 from .models import HiveRequest, Contract, Hive, Membership
@@ -25,6 +26,10 @@ class HiveService:
     @staticmethod
     def get_hive(hive_id) -> Hive:
         return Hive.objects.get(id=hive_id)
+
+    @staticmethod
+    def get_user_hives(user: User) -> [Hive]:
+        return Hive.objects.filter(admins=user)
 
 
 class NectarService:

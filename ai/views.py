@@ -1,12 +1,13 @@
 # views.py
-from drf_yasg.utils import swagger_auto_schema
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.exceptions import ValidationError
 from django.contrib.auth import get_user_model
-from .services import run_message_through_hive_aware_assistant  # Import the function
+from drf_yasg.utils import swagger_auto_schema
+from rest_framework.exceptions import ValidationError
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
 from .serializers import HiveAssistantRequestSerializer
+from .services import AIService
 
 User = get_user_model()
 
@@ -21,17 +22,18 @@ class TestHiveAssistantView(APIView):
     def post(self, request):
         serializer = HiveAssistantRequestSerializer(data=request.data)
         if serializer.is_valid():
-            hive_id = serializer.validated_data['hive_id']
             message = serializer.validated_data['message']
-            user_id = request.user.id
-            thread_id = serializer.validated_data.get('thread_id', None)
+            additional_instructions = serializer.validated_data['additional_instructions']
 
             try:
-                messages = run_message_through_hive_aware_assistant(hive_id, message, user_id, thread_id)
+                ai_service = AIService(user=request.user, assistant_type="hive_assistant")
+                messages = ai_service.send_message(message=message, additional_instructions=additional_instructions,
+                                                   ai_type="hive_assistant")
                 return Response({'messages': messages})
             except ValidationError as e:
                 return Response({'error': str(e)}, status=400)
             except Exception as e:
+                print(e)
                 return Response({'error': 'An error occurred while processing your request'}, status=500)
         else:
             return Response(serializer.errors, status=400)
