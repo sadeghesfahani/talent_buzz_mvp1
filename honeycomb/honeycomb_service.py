@@ -1,12 +1,12 @@
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 
-from .models import HiveRequest, Contract, Hive, Membership
 
 
 class HiveService:
     @staticmethod
     def submit_membership_application(hive, bee):
+        from .models import HiveRequest, Membership
         if HiveRequest.objects.filter(hive=hive, bee=bee, is_accepted=False).exists():
             raise ValidationError("A pending application already exists.")
         if Membership.objects.filter(hive=hive, bee=bee).exists():
@@ -21,20 +21,24 @@ class HiveService:
 
     @staticmethod
     def get_hive_admins(hive):
+        from .models import Hive
         return hive.admins.all()
 
     @staticmethod
-    def get_hive(hive_id) -> Hive:
+    def get_hive(hive_id) -> 'Hive':
+        from .models import Hive
         return Hive.objects.get(id=hive_id)
 
     @staticmethod
-    def get_user_hives(user: User) -> [Hive]:
+    def get_user_hives(user: User) -> ['Hive']:
+        from .models import Hive
         return Hive.objects.filter(admins=user)
 
 
 class NectarService:
     @staticmethod
     def submit_nectar_application(nectar, bee):
+        from .models import Contract
         if Contract.objects.filter(nectar=nectar, bee=bee, is_accepted=False).exists():
             raise ValidationError("A pending application already exists.")
         application = Contract.objects.create(nectar=nectar, bee=bee)

@@ -115,6 +115,10 @@ class Bee(models.Model):
         return self.user.email
 
 
+
+
+
+
 class Membership(models.Model):
     hive = models.ForeignKey(Hive, on_delete=models.CASCADE)
     bee = models.ForeignKey(Bee, on_delete=models.CASCADE)

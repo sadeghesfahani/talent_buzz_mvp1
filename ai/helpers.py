@@ -1,11 +1,19 @@
+import asyncio
+import time
+
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.db.models import QuerySet
 from openai import OpenAI
 from openai.types.beta import VectorStore, Assistant, Thread
 from openai.types.beta.threads import Run
-from .models import Thread as ThreadModel
+
 import honeycomb.honeycomb_service
 from ai.models import AssistantInfo
+from common.models import Document
+from .models import Thread as ThreadModel
+
+client = OpenAI(api_key=settings.OPEN_AI_API_KEY)
 
 
 class AIBaseClass:
@@ -16,6 +24,59 @@ class AIBaseClass:
         self.functions = []
         self.assistant_info = self.get_or_create_assistant_info_model_object()
         self.assistant = self.get_assistant(assistant_type)
+
+    def get_new_file_ids(self, vector_store_id, document_queryset: QuerySet[Document]) -> [str]:
+        """
+        Retrieve new file IDs that are not already in the vector store.
+
+        :param vector_store_id: The ID of the vector store.
+        :param document_queryset: QuerySet of documents to check.
+        :return: List of new file IDs.
+        """
+        supported_extensions = ['pdf', 'txt', 'docx']  # Add all supported extensions here
+
+        file_ids = []
+        for document in document_queryset:
+            file_extension = document.document.file.name.split('.')[-1].lower()
+            if file_extension not in supported_extensions:
+                print(
+                    f"Unsupported file extension: {file_extension} for document {document.document.file.name} - {document.document.id}")
+                continue
+
+            file_ids.append(document.file_id)
+
+        # Distinct file_ids
+        file_ids = list(set(file_ids))
+
+        # Retrieve existing file IDs from the vector store
+        try:
+            existing_files_page = self.client.beta.vector_stores.files.list(vector_store_id=vector_store_id)
+            existing_file_ids = {file.id for file in existing_files_page}
+        except Exception as e:
+            print(f"Failed to retrieve existing files from vector store: {e}")
+            return []
+
+        # Filter out the file IDs that are already in the vector store
+        new_file_ids = [file_id for file_id in file_ids if file_id not in existing_file_ids]
+
+        return new_file_ids
+
+    def add_documents_to_vector_store(self, vector_store_id, document_queryset):
+        """
+        Add documents to the vector store.
+
+        :param vector_store_id: The ID of the vector store.
+        :param document_queryset: QuerySet of documents to add.
+        :return: None
+        """
+
+
+
+        new_file_ids = self.get_new_file_ids(vector_store_id, document_queryset)
+        if new_file_ids:
+            asyncio.run(add_files_async(vector_store_id, new_file_ids))
+        else:
+            print("No new files to add to vector store")
 
     def get_hive_tools(self, hive_id: str) -> 'HiveAI':
         if self.tools:
@@ -76,7 +137,6 @@ class AIBaseClass:
             ThreadModel.objects.create(user=user, thread_id=thread.id)
             return thread
 
-
     def run(self, assistant_id: str, thread_id: str, additional_instructions: str = "") -> Run:
         run = self.client.beta.threads.runs.create(
             thread_id=thread_id,
@@ -116,4 +176,51 @@ class HiveAI:
             hive_object.vector_store_id if hive_object.vector_store_id else None)
 
 
+async def add_files_async(vector_store_id, file_ids):
+    tasks = []
+    for file_id in file_ids:
+        task = asyncio.create_task(create_file(vector_store_id, file_id))
+        tasks.append(task)
 
+    await asyncio.gather(*tasks)
+
+
+async def create_file(vector_store_id, file_id):
+    print(f"Adding file {file_id} to vector store {vector_store_id}")
+    loop = asyncio.get_event_loop()
+    try:
+        await loop.run_in_executor(None, lambda: client.beta.vector_stores.files.create_and_poll(
+            vector_store_id=vector_store_id, file_id=file_id))
+        print(f"Successfully added file {file_id} to vector store")
+    except Exception as e:
+        print(f"Failed to add file {file_id} to vector store: {e}")
+        raise e
+async def create_file(vector_store_id, file_id):
+    loop = asyncio.get_event_loop()
+    client = OpenAI(api_key=settings.OPEN_AI_API_KEY)
+
+    try:
+        await loop.run_in_executor(None, lambda: client.beta.vector_stores.files.create_and_poll(
+            vector_store_id=vector_store_id, file_id=file_id))
+        print(f"Successfully initiated upload for file {file_id}")
+
+        # Polling until the file becomes available
+        await poll_file_availability(vector_store_id, file_id)
+
+        print(f"File {file_id} is now available in vector store")
+    except Exception as e:
+        print(f"Failed to add file {file_id} to vector store: {e}")
+
+async def poll_file_availability(vector_store_id, file_id, timeout=300, poll_interval=5):
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        try:
+            # Replace this with the actual method to check if the file is available
+            file = client.beta.vector_stores.files.retrieve(vector_store_id=vector_store_id, file_id=file_id)
+            if file and file.status == 'completed':  # Assuming 'available' is the status you are checking for
+                return file
+        except Exception as e:
+            print(f"Waiting for file {file_id} to become available: {e}")
+
+        await asyncio.sleep(poll_interval)
+    raise TimeoutError(f"File {file_id} did not become available within {timeout} seconds.")

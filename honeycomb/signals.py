@@ -1,13 +1,17 @@
 # myapp/signals.py
 from django.conf import settings
-from django.db.models.signals import post_save, post_delete
+from django.db.models.signals import post_save, post_delete, m2m_changed
 from django.dispatch import receiver
 from openai import OpenAI
 
+from ai.helpers import AIBaseClass
+from ai.models import AssistantInfo
 from communication.models import Notification
-from .models import Hive, Membership, Nectar, HiveRequest, Contract, Report
 from honeycomb.tasks import sync_hive_vector_store
+from .models import Hive, Membership, Nectar, HiveRequest, Contract, Report, Bee
+
 client = OpenAI(api_key=settings.OPEN_AI_API_KEY)
+
 
 @receiver(post_save, sender=Hive)
 def hive_created(sender, instance, created, **kwargs):
@@ -141,7 +145,6 @@ def contract_deleted(sender, instance, **kwargs):
         )
 
 
-
 @receiver(post_save, sender=Hive)
 def sync_vector_store(sender, instance, created, **kwargs):
     if settings.IS_TEST:
@@ -154,3 +157,15 @@ def sync_vector_store(sender, instance, created, **kwargs):
     else:
         # Sync vector store if it already exists
         sync_hive_vector_store.delay(vector_store_id=instance.vector_store_id, hive_id=instance.id)
+
+
+@receiver(m2m_changed, sender=Bee.documents.through)
+def sync_bee_files(sender, instance, action, reverse, model, pk_set, **kwargs):
+    if settings.IS_TEST:
+        return
+
+    if action == "post_add" or action == "post_remove":
+        base_vector_store = AssistantInfo.objects.first().base_vector_store_id
+        AIBaseClass().add_documents_to_vector_store(base_vector_store, instance.documents.all())
+
+
