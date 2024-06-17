@@ -1,8 +1,6 @@
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 
-from honeycomb.models import Bee, Contract, Nectar
-
 
 class HiveService:
     @staticmethod
@@ -22,7 +20,6 @@ class HiveService:
 
     @staticmethod
     def get_hive_admins(hive):
-        from .models import Hive
         return hive.admins.all()
 
     @staticmethod
@@ -56,7 +53,7 @@ class BeeService:
         from .models import Bee
         return Bee.objects.get(id=bee_id)
 
-    def get_bee_queryset(self, list_of_bee_ids:[str]):
+    def get_bee_queryset(self, list_of_bee_ids: [str]):
         from .models import Bee
         return Bee.objects.filter(id__in=list_of_bee_ids)
 
