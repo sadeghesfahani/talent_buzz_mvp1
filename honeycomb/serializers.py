@@ -12,10 +12,55 @@ class BeeSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class BeeWithDetailSerializer(serializers.ModelSerializer):
+    user = UserSerializer()
+
+    class Meta:
+        model = Bee
+        fields = '__all__'
+
+
+class HiveWiThDetailsSerializer(serializers.ModelSerializer):
+    hive_bees = BeeWithDetailSerializer(many=True)
+
+    class Meta:
+        model = Hive
+        fields = '__all__'
+
+
+class NectarSerializer(serializers.ModelSerializer):
+    nectar_hive = HiveWiThDetailsSerializer()
+    tags = TagListSerializerField()
+    documents = serializers.ListField(
+        child=serializers.FileField(max_length=100000, allow_empty_file=False, use_url=False),
+        write_only=True,
+        required=False
+    )
+    uploaded_documents = DocumentSerializer(many=True, read_only=True, source='documents')
+
+    class Meta:
+        model = Nectar
+        fields = '__all__'
+
+
+class CreateNectarSerializer(serializers.ModelSerializer):
+    tags = TagListSerializerField()
+    documents = serializers.ListField(
+        child=serializers.FileField(max_length=100000, allow_empty_file=False, use_url=False),
+        write_only=True,
+        required=False
+    )
+    uploaded_documents = DocumentSerializer(many=True, read_only=True, source='documents')
+
+    class Meta:
+        model = Nectar
+        fields = '__all__'
+
 class HiveSerializer(serializers.ModelSerializer):
     tags = TagListSerializerField()
     admins = UserSerializer(many=True, read_only=True)
     hive_bees = BeeSerializer(many=True, read_only=True)
+    nectars = NectarSerializer(many=True, read_only=True)
 
     class Meta:
         model = Hive
@@ -35,36 +80,6 @@ class HiveSerializer(serializers.ModelSerializer):
         return instance
 
 
-class NectarSerializer(serializers.ModelSerializer):
-    tags = TagListSerializerField()
-    documents = serializers.ListField(
-        child=serializers.FileField(max_length=100000, allow_empty_file=False, use_url=False),
-        write_only=True,
-        required=False
-    )
-    uploaded_documents = DocumentSerializer(many=True, read_only=True, source='documents')
-
-    class Meta:
-        model = Nectar
-        fields = '__all__'
-
-
-class BeeWithDetailSerializer(serializers.ModelSerializer):
-    user = UserSerializer()
-
-    class Meta:
-        model = Bee
-        fields = '__all__'
-
-
-class HiveWiThDetailsSerializer(serializers.ModelSerializer):
-    hive_bees = BeeWithDetailSerializer(many=True)
-
-    class Meta:
-        model = Hive
-        fields = '__all__'
-
-
 class HiveRequestSerializer(serializers.ModelSerializer):
     bee = BeeWithDetailSerializer(read_only=True)
 
@@ -73,8 +88,15 @@ class HiveRequestSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class CreateHiveRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HiveRequest
+        fields = '__all__'
+
+
 class ContractSerializer(serializers.ModelSerializer):
     bees_with_detail = serializers.SerializerMethodField()
+    nectar = NectarSerializer(read_only=True)
 
     class Meta:
         model = Contract
@@ -85,6 +107,11 @@ class ContractSerializer(serializers.ModelSerializer):
             return BeeWithDetailSerializer(obj.bee).data
         else:
             return None  # Or provide some default data
+
+class CreateContractSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Contract
+        fields = '__all__'
 
 
 class MembershipAcceptSerializer(serializers.Serializer):
@@ -98,8 +125,14 @@ class MembershipSubmitSerializer(serializers.Serializer):
 class ReportSerializer(serializers.ModelSerializer):
     hive = HiveSerializer(read_only=True)
     nectar = NectarSerializer(read_only=True)
-    bee = BeeSerializer(read_only=True)
+    bee = BeeWithDetailSerializer(read_only=True)
 
+    class Meta:
+        model = Report
+        fields = '__all__'
+
+
+class CreateReportSerializer(serializers.ModelSerializer):
     class Meta:
         model = Report
         fields = '__all__'

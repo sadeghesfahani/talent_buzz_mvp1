@@ -11,11 +11,13 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from common.models import Document
-from .filters import HiveFilter, BeeFilter, NectarFilter, MembershipFilter, ContractFilter, HiveRequestFilter, ReportsFilter
+from .filters import HiveFilter, BeeFilter, NectarFilter, MembershipFilter, ContractFilter, HiveRequestFilter, \
+    ReportsFilter
 from .honeycomb_service import NectarService, HiveService
 from .models import Hive, Bee, Membership, Nectar, HiveRequest, Contract, Report
 from .serializers import HiveSerializer, BeeSerializer, MembershipSerializer, NectarSerializer, HiveRequestSerializer, \
-    ContractSerializer, MembershipAcceptSerializer, ReportSerializer, HiveWiThDetailsSerializer
+    ContractSerializer, MembershipAcceptSerializer, ReportSerializer, HiveWiThDetailsSerializer, \
+    CreateHiveRequestSerializer, CreateReportSerializer, CreateContractSerializer, CreateNectarSerializer
 
 
 class HiveViewSet(viewsets.ModelViewSet):
@@ -114,15 +116,21 @@ class MembershipViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        return Membership.objects.filter(bee__user=user)
+        # return Membership.objects.filter(bee__user=user)
+        return Membership.objects.all()
 
 
 class NectarViewSet(viewsets.ModelViewSet):
     queryset = Nectar.objects.all()
-    serializer_class = NectarSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
     filterset_class = NectarFilter
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            return CreateNectarSerializer
+        else:
+            return NectarSerializer
 
     def perform_create(self, serializer):
         documents = self.request.FILES.getlist('documents')
@@ -141,16 +149,21 @@ class NectarViewSet(viewsets.ModelViewSet):
 
 class HiveRequestViewSet(viewsets.ModelViewSet):
     queryset = HiveRequest.objects.all()
-    serializer_class = HiveRequestSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
     filterset_class = HiveRequestFilter
 
-    def get_queryset(self):
-        user = self.request.user
-        hives_admin = Hive.objects.filter(admins__in=[user])
-        hive_ids = hives_admin.values_list('id', flat=True)
-        return HiveRequest.objects.filter(hive_id__in=hive_ids)
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return CreateHiveRequestSerializer
+        else:
+            return HiveRequestSerializer
+
+    # def get_queryset(self):
+    #     user = self.request.user
+    #     hives_admin = Hive.objects.filter(admins__in=[user])
+    #     hive_ids = hives_admin.values_list('id', flat=True)
+    #     return HiveRequest.objects.filter(hive_id__in=hive_ids)
 
     def perform_create(self, serializer):
         hive = serializer.validated_data['hive']
@@ -171,7 +184,6 @@ class HiveRequestViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         raise MethodNotAllowed("DELETE method not allowed on this endpoint.")
-
 
     def _handle_application_response(self, application, user):
         if self._is_user_admin_of_hive(application.hive, user):
@@ -196,10 +208,16 @@ class HiveRequestViewSet(viewsets.ModelViewSet):
 
 class ReportViewSet(viewsets.ModelViewSet):
     queryset = Report.objects.all()
-    serializer_class = ReportSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
     filterset_class = ReportsFilter
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return CreateReportSerializer
+        else:
+            return ReportSerializer
+
     def get_queryset(self):
         user = self.request.user
         member_hive_ids = Membership.objects.filter(bee__user=user).values_list('hive_id', flat=True)
@@ -215,10 +233,15 @@ class ReportViewSet(viewsets.ModelViewSet):
 
 class ContractViewSet(viewsets.ModelViewSet):
     queryset = Contract.objects.all()
-    serializer_class = ContractSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
     filterset_class = ContractFilter
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            return CreateContractSerializer
+        else:
+            return ContractSerializer
 
     def perform_create(self, serializer):
         nectar = serializer.validated_data['nectar']
@@ -228,7 +251,7 @@ class ContractViewSet(viewsets.ModelViewSet):
     def perform_update(self, serializer):
         instance = self.get_object()
         if 'is_accepted' in serializer.validated_data and serializer.validated_data['is_accepted']:
-            NectarService.accept_nectar_application(instance, self.request.user.bee)
+            NectarService.accept_nectar_application(instance, self.request.user)
         return super().perform_update(serializer)
 
 
@@ -237,6 +260,7 @@ class MembershipAcceptView(APIView):
     HIVE_REQUEST_NOT_FOUND = "Hive Request not found"
     NOT_HIVE_ADMIN = "You are not an admin of this hive"
     FIELD_REQUIRED = "This field is required."
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.hive_service = HiveService()
@@ -261,14 +285,14 @@ class MembershipAcceptView(APIView):
         if serializer.is_valid():
             hive_request_id = serializer.validated_data['hive_request_id']
 
-            hive = self.hive_service.get_hive(hive_request_id)
-            if not hive:
-                return Response({"message": self.HIVE_REQUEST_NOT_FOUND}, status=status.HTTP_404_NOT_FOUND)
-            if not hive.is_admin_by_user(request.user):
-                return Response({"message": self.NOT_HIVE_ADMIN}, status=status.HTTP_403_FORBIDDEN)
-
-            hive.accept_application(request.user.bee)
             hive_request = HiveRequest.objects.get(id=hive_request_id)
+            if not hive_request:
+                return Response({"message": self.HIVE_REQUEST_NOT_FOUND}, status=status.HTTP_404_NOT_FOUND)
+            # if not hive_request.is_admin_by_user(request.user):
+            #     return Response({"message": self.NOT_HIVE_ADMIN}, status=status.HTTP_403_FORBIDDEN)
+
+            hive_request.accept_application(request.user.bee)
+            # hive.accept_application(request.user.bee)
             hive_request.is_accepted = True
             hive_request.save()
             return Response({"message": self.MEMBERSHIP_ACCEPT_SUCCESS}, status=status.HTTP_200_OK)

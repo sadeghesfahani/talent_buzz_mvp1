@@ -1,6 +1,7 @@
 from django.db import models
 from django.db.models.functions import datetime
 from simple_history.models import HistoricalRecords
+from django_filters.rest_framework import DjangoFilterBackend
 
 
 
@@ -25,7 +26,7 @@ class BeeSelection(models.Model):
 class Task(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField()
-    contract = models.ForeignKey('honeycomb.Contract', on_delete=models.CASCADE, related_name='tasks')
+    contract = models.ForeignKey('honeycomb.Contract', on_delete=models.CASCADE, related_name='tasks', null=True, blank=True)
     assigned_bees = models.ManyToManyField('honeycomb.Bee', related_name='tasks', blank=True)
     bee_selection = models.OneToOneField('BeeSelection', on_delete=models.CASCADE, related_name='task',
                                          null=True, blank=True)
@@ -39,6 +40,7 @@ class Task(models.Model):
     urgency = models.IntegerField(default=1)
     status = models.CharField(max_length=255, default='pending')
     documents = models.ManyToManyField('common.Document', related_name='tasks', blank=True)
+    nectar = models.ForeignKey('honeycomb.Nectar', on_delete=models.CASCADE, related_name='tasks')
     change_history = HistoricalRecords()
 
     def __str__(self):

@@ -1,9 +1,8 @@
 import uuid
 from typing import Union
 
-import openai
 from django.conf import settings
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.db import models
 from django.db.models import Sum, QuerySet
 from django.utils import timezone
@@ -90,7 +89,6 @@ class Hive(models.Model):
     def get_hive_bees(self) -> QuerySet['Bee']:
         return Bee.objects.filter(membership__hive=self, membership__is_accepted=True)
 
-
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         Conversation.objects.get_or_create(hive=self, tag="general")
@@ -113,10 +111,6 @@ class Bee(models.Model):
 
     def __str__(self):
         return self.user.email
-
-
-
-
 
 
 class Membership(models.Model):
@@ -279,7 +273,9 @@ class Contract(models.Model):
     def accept_application(self, user: Bee) -> None:
         if self.is_accepted:
             raise ValidationError("Application is already accepted.")
-        if user not in self.nectar.nectar_hive.admins.all():
+
+        count = self.nectar.nectar_hive.admins.filter(id=user.id).exists()
+        if not count:
             raise ValidationError("Only hive admins can accept nectar applications.")
         if self.nectar.is_full():
             raise ValidationError("This nectar already has the required number of freelancers.")
@@ -318,8 +314,12 @@ class Report(models.Model):
         return self.title
 
     def clean(self):
-        if not (self.hive or self.nectar or self.bee):
-            raise ValidationError("A report must be related to at least one of hive, nectar, or bee.")
+        try:
+            if not (self.hive or self.nectar or self.bee):
+                raise ValidationError("A report must be related to at least one of hive, nectar, or bee.")
+        except ObjectDoesNotExist:
+            return None
+
         super().clean()
 
     def save(self, *args, **kwargs):

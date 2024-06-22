@@ -36,22 +36,22 @@ def membership_created(sender, instance, created, **kwargs):
         )
 
 
-@receiver(post_save, sender=Nectar)
-def nectar_created(sender, instance, created, **kwargs):
-    if created:
-        # Notify hive admins of the new nectar
-        for admin in instance.nectar_hive.admins.all():
-            Notification.objects.create(
-                user=admin,
-                message=f"A new nectar '{instance.nectar_title}' has been created in hive '{instance.nectar_hive.name}'.",
-                notification_type='info'
-            )
-        for bee in instance.nectar_hive.get_hive_bees():
-            Notification.objects.create(
-                user=bee.user,
-                message=f"Nectar '{instance.nectar_title}' in hive '{instance.nectar_hive.name} posted'.",
-                notification_type='info'
-            )
+# @receiver(post_save, sender=Nectar)
+# def nectar_created(sender, instance, created, **kwargs):
+#     if created:
+#         # Notify hive admins of the new nectar
+#         for admin in instance.nectar_hive.admins.all():
+#             Notification.objects.create(
+#                 user=admin,
+#                 message=f"A new nectar '{instance.nectar_title}' has been created in hive '{instance.nectar_hive.name}'.",
+#                 notification_type='info'
+#             )
+#         for bee in instance.nectar_hive.get_hive_bees():
+#             Notification.objects.create(
+#                 user=bee.user,
+#                 message=f"Nectar '{instance.nectar_title}' in hive '{instance.nectar_hive.name} posted'.",
+#                 notification_type='info'
+#             )
 
 
 @receiver(post_save, sender=HiveRequest)
