@@ -4,6 +4,8 @@ from rest_framework import viewsets, permissions
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from django_filters.rest_framework import DjangoFilterBackend
+from .filters import MessageFilter, ConversationFilter
 
 from .models import Conversation, Message, Notification
 from .permissions import IsParticipantOrPublicHive, IsMessageSenderOrParticipant, IsOwner
@@ -14,6 +16,8 @@ from .serializers import MessageSerializer, ConversationListSerializer, \
 class ConversationViewSet(viewsets.ModelViewSet):
     queryset = Conversation.objects.all()
     permission_classes = [permissions.IsAuthenticated, IsParticipantOrPublicHive]
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = ConversationFilter
 
     def get_queryset(self):
         return Conversation.objects.filter(
@@ -35,6 +39,8 @@ class MessageViewSet(viewsets.ModelViewSet):
     queryset = Message.objects.all()
     serializer_class = MessageSerializer
     permission_classes = [permissions.IsAuthenticated, IsMessageSenderOrParticipant]
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = MessageFilter
 
     def get_queryset(self):
         return Message.objects.filter(
