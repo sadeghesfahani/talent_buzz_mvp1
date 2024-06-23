@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from taggit.serializers import TagListSerializerField
 
+from common.models import Document
 from common.serializers import DocumentSerializer
 from user.serializers import UserSerializer
 from .models import Hive, Bee, Membership, Nectar, HiveRequest, Contract, Report
@@ -151,6 +152,17 @@ class CreateNectarSerializer(serializers.ModelSerializer):
     class Meta:
         model = Nectar
         fields = '__all__'
+
+    def create(self, validated_data):
+        document_files = validated_data.pop('documents', [])
+        nectar = Nectar.objects.create(**validated_data)
+
+        # Handling document saving
+        for doc_file in document_files:
+            document = Document.objects.create(file=doc_file)
+            nectar.documents.add(document)
+
+        return nectar
 
 
 class MembershipSerializer(serializers.ModelSerializer):

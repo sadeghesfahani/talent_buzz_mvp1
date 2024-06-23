@@ -139,7 +139,7 @@ class NectarViewSet(viewsets.ModelViewSet):
         return nectar
 
     def get_serializer_class(self):
-        if self.action == "create":
+        if self.action == "create" or self.action == "update":
             return CreateNectarSerializer
         else:
             return NectarSerializer
@@ -152,7 +152,7 @@ class HiveRequestViewSet(viewsets.ModelViewSet):
     filterset_class = HiveRequestFilter
 
     def get_serializer_class(self):
-        if self.action == 'create':
+        if self.action == "create" or self.action == "update":
             return CreateHiveRequestSerializer
         else:
             return HiveRequestSerializer
@@ -221,7 +221,7 @@ class ReportViewSet(viewsets.ModelViewSet):
 
 
     def get_serializer_class(self):
-        if self.action == 'create':
+        if self.action == "create" or self.action == "update":
             return CreateReportSerializer
         return ReportSerializer
 
@@ -236,7 +236,7 @@ class ContractViewSet(viewsets.ModelViewSet):
     filterset_class = ContractFilter
 
     def get_serializer_class(self):
-        if self.action == "create":
+        if self.action == "create" or self.action == "update":
             return CreateContractSerializer
         else:
             return ContractSerializer
