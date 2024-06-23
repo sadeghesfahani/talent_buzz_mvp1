@@ -20,9 +20,10 @@ class AIBaseClass:
     def __init__(self, assistant_type="general_assistant"):
         self.tools = None
         self.client = OpenAI(api_key=settings.OPEN_AI_API_KEY)
-        self.base_vector_store = None
-        self.functions = []
         self.assistant_info = self.get_or_create_assistant_info_model_object()
+        self.base_vector_store = self.assistant_info.base_vector_store_id
+        self.functions = []
+
         self.assistant = self.get_assistant(assistant_type)
 
     def get_new_file_ids(self, vector_store_id, document_queryset: QuerySet[Document]) -> [str]:
@@ -146,12 +147,12 @@ class AIBaseClass:
         return run
 
     def add_message_to_thread(self, thread_id: str, message: str) -> Thread:
-        # try:
-        #     print ("canceling existing run")
-        #     self.client.beta.threads.runs.cancel(thread_id=thread_id,run_id="run_FxUYEQyRZfTYy2q7RmOhKkbR")
-        #     print("Cancelled existing run")
-        # except Exception as e:
-        #     print(f"Failed to cancel existing run: {e}")
+        try:
+            print ("canceling existing run")
+            self.client.beta.threads.runs.cancel(thread_id=thread_id,run_id="run_EVZOB6zC8ODtkNGr2utZZmKm")
+            print("Cancelled existing run")
+        except Exception as e:
+            print(f"Failed to cancel existing run: {e}")
         thread = self.client.beta.threads.retrieve(thread_id)
         self.client.beta.threads.messages.create(
             thread_id=thread_id,

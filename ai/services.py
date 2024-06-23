@@ -37,12 +37,11 @@ class AIService:
         #         vector_stores.append(self.ai.get_hive_tools(hive.id).get_or_create_hive_vector_store(hive.id))
 
         thread = self.ai.get_or_create_thread(self.thread_id)
-        print(1)
+        print(vector_stores)
         thread = client.beta.threads.update(
             self.thread_id,
             tool_resources={
-                "file_search": {"vector_store_ids": [vector_store.id for vector_store in vector_stores if
-                                                     vector_store is not None]}},
+                "file_search": {"vector_store_ids": vector_stores}},
             metadata=thread.metadata
         )
         print(1)
@@ -53,6 +52,7 @@ class AIService:
         return self.process_ai_response(run)
 
     def process_ai_response(self, run):
+        print(run.status)
         if run.status == "requires_action":
             print("here")
             function_responses = list()
@@ -82,11 +82,10 @@ class AIService:
                                                                       thread_id=run.thread_id))
 
         elif run.status == "completed":
-
-            response = client.beta.threads.messages.list(thread_id=run.thread_id)[-1]
-            self.last_message.response = response.content
+            response = client.beta.threads.messages.list(thread_id=run.thread_id).data[0]
+            self.last_message.response = response.content[0].text.value
             self.last_message.save()
-            return response.content
+            return self.last_message.response
 
     def show_bees_to_user(self, bees_id_list: [str]) -> str:
         print(bees_id_list)

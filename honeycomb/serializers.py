@@ -108,12 +108,13 @@ class CreateHiveRequestSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class ContractSerializer(serializers.ModelSerializer):
-    bees_with_detail = serializers.SerializerMethodField()
-    nectar = NectarSerializer(read_only=True)
-
-    class Meta:
-        model = Contract
+# class ContractSerializer(serializers.ModelSerializer):
+#     bees_with_detail = serializers.SerializerMethodField()
+#     nectar = NectarSerializer(read_only=True)
+#
+#     class Meta:
+#         model = Contract
+#         fields = "__all__"
 
 class CreateContractSerializer(serializers.ModelSerializer):
     class Meta:

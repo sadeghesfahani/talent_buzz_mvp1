@@ -125,6 +125,7 @@ class Bee(models.Model):
 
     def convert_to_ai_readable(self):
         return f"""user information : {self.user.convert_to_ai_readable()}
+         bee id: {self.id}
          bee bio : {self.bee_bio}
          bee type : {self.bee_type}
          bee documents : {[document.convert_to_ai_readable() for document in self.documents.all()]}

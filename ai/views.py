@@ -6,6 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from honeycomb.models import Hive, Bee
 from .serializers import HiveAssistantRequestSerializer
 from .services import AIService
 
@@ -24,10 +25,17 @@ class TestHiveAssistantView(APIView):
         if serializer.is_valid():
             message = serializer.validated_data['message']
             additional_instructions = serializer.validated_data['additional_instructions']
+            final_additional_instructions = f"""
+            hives information:
+            {[hive.convert_to_ai_readable() for hive in Hive.objects.all()]}
+            bees information:
+            {[bee.convert_to_ai_readable() for bee in Bee.objects.all()]}
+            """ + additional_instructions
 
+            print(final_additional_instructions.encode('utf-8', errors='ignore'))
             try:
                 ai_service = AIService(user=request.user, assistant_type="hive_assistant")
-                messages = ai_service.send_message(message=message, additional_instructions=additional_instructions,
+                messages = ai_service.send_message(message=message, additional_instructions=str(final_additional_instructions.encode('utf-8', errors='ignore')),
                                                    ai_type="hive_assistant")
                 return Response({'messages': messages})
             except ValidationError as e:

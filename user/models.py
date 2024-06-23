@@ -81,6 +81,12 @@ class CompanyDetails(models.Model):
     def __str__(self):
         return f"CompanyDetails for {self.company_name}"
 
+    def convert_to_ai_readable(self):
+        return f"""
+        company name is : {self.company_name}, company description is : {self.company_description}, company specialities are : {self.company_specialities}
+        company social media are : {self.company_social_media}
+        """
+
 
 class FreelancerDetails(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='freelancer_details')
@@ -93,6 +99,13 @@ class FreelancerDetails(models.Model):
 
     def __str__(self):
         return f"FreelancerDetails for {self.id}"
+
+    def convert_to_ai_readable(self):
+        return f"""
+        freelancer hourly rate is : {self.hourly_rate}, freelancer skills are : {[skill.name for skill in self.skills.all()]}
+        freelancer experience is : {self.experience}, freelancer education is : {self.education}, freelancer certification is : {self.certification}
+        freelancer portfolio is : {self.portfolio}
+        """
 
 
 class User(AbstractBaseUser, PermissionsMixin):
@@ -135,6 +148,20 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
+
+    def convert_to_ai_readable(self):
+        return f"""
+        user email is : {self.email}
+        user username is : {self.username}
+        user phone number is : {self.phone_number}
+        user id is : {self.id}
+        user personal information:
+        {self.personal_details.convert_to_ai_readable() if hasattr(self, 'personal_details') else None}
+        user company information:
+        {self.company_details.convert_to_ai_readable() if hasattr(self, 'company_details') else None}
+        user freelancer information:
+        {self.freelancer_details.convert_to_ai_readable() if hasattr(self, 'freelancer_details') else None}
+        """
 
 
 class Skill(models.Model):
