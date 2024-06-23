@@ -277,12 +277,12 @@ class Contract(models.Model):
         super().save(*args, **kwargs)
 
     def accept_application(self, user: Bee) -> None:
-        if self.is_accepted:
-            raise ValidationError("Application is already accepted.")
-        if user not in self.nectar.nectar_hive.admins.all():
+        is_admin = self.nectar.nectar_hive.admins.filter(id=user.id).exists()
+        if not is_admin:
             raise ValidationError("Only hive admins can accept nectar applications.")
         if self.nectar.is_full():
             raise ValidationError("This nectar already has the required number of freelancers.")
+
         self.is_accepted = True
         self.accepted_at = timezone.now()
         self.save()
@@ -314,14 +314,4 @@ class Report(models.Model):
 
     objects = ReportManager()
 
-    def __str__(self):
-        return self.title
 
-    def clean(self):
-        if not (self.hive or self.nectar or self.bee):
-            raise ValidationError("A report must be related to at least one of hive, nectar, or bee.")
-        super().clean()
-
-    def save(self, *args, **kwargs):
-        self.clean()
-        super().save(*args, **kwargs)

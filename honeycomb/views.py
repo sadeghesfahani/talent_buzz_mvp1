@@ -15,7 +15,7 @@ from .filters import HiveFilter, BeeFilter, NectarFilter, MembershipFilter, Cont
 from .honeycomb_service import NectarService, HiveService
 from .models import Hive, Bee, Membership, Nectar, HiveRequest, Contract, Report
 from .serializers import HiveSerializer, BeeSerializer, MembershipSerializer, NectarSerializer, HiveRequestSerializer, \
-    ContractSerializer, MembershipAcceptSerializer, ReportSerializer, HiveWiThDetailsSerializer
+    ContractSerializer, MembershipAcceptSerializer, ReportSerializer, HiveWiThDetailsSerializer, CreateReportSerializer
 
 
 class HiveViewSet(viewsets.ModelViewSet):
@@ -208,6 +208,12 @@ class ReportViewSet(viewsets.ModelViewSet):
             Q(hive_id__in=member_hive_ids) |
             Q(hive_id__in=public_hive_ids)
         ).distinct()
+
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return CreateReportSerializer
+        return ReportSerializer
 
     def perform_create(self, serializer):
         serializer.save()

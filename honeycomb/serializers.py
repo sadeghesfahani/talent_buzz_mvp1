@@ -105,6 +105,12 @@ class ReportSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class CreateReportSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Report
+        fields = '__all__'
+
+
 class MembershipSerializer(serializers.ModelSerializer):
     hive = HiveSerializer(read_only=True)
     bee = BeeWithDetailSerializer(read_only=True)

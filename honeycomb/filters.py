@@ -12,6 +12,8 @@ class HiveFilter(django_filters.FilterSet):
         queryset=Tag.objects.all()
     )
 
+    admin_id = django_filters.NumberFilter(method='filter_by_admin_id')
+
     class Meta:
         model = Hive
         fields = {
@@ -20,6 +22,9 @@ class HiveFilter(django_filters.FilterSet):
             'is_public': ['exact'],
             'tags': ['exact'],
         }
+
+    def filter_by_admin_id(self, queryset, name, value):
+        return queryset.filter(admins__id=value)
 
 
 class BeeFilter(django_filters.FilterSet):
