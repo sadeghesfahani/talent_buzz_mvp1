@@ -98,6 +98,15 @@ class Hive(models.Model):
     def __str__(self):
         return self.name
 
+    def convert_to_ai_readable(self):
+        return f"""
+        Name: {self.name}
+        Description: {self.description}
+        Hive type: {self.hive_type}
+        Hive requirements: {self.hive_requirements}
+        hive documents: {[document.convert_to_ai_readable() for document in self.documents.all()]}
+        """
+
 
 class Bee(models.Model):
     DEFAULT_BEE_TYPE = 'worker'
@@ -113,6 +122,13 @@ class Bee(models.Model):
 
     def __str__(self):
         return self.user.email
+
+    def convert_to_ai_readable(self):
+        return f"""user information : {self.user.convert_to_ai_readable()}
+         bee bio : {self.bee_bio}
+         bee type : {self.bee_type}
+         bee documents : {[document.convert_to_ai_readable() for document in self.documents.all()]}
+         """
 
 
 
@@ -196,6 +212,18 @@ class Nectar(models.Model):
 
     def __str__(self):
         return self.nectar_title
+
+    def convert_to_ai_readable(self):
+        return f"""
+        Title: {self.nectar_title}
+        Description: {self.nectar_description}
+        required skills for this nectar: {self.required_skills}
+        Price: {self.price}
+        Duration: {self.duration}
+        Deadline: {self.deadline}
+        documents: {[document.convert_to_ai_readable() for document in self.documents.all()]}
+        tags: {self.tags.all()}
+        """
 
 
 class HiveRequest(models.Model):

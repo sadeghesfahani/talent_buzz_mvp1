@@ -54,6 +54,12 @@ class PersonalDetails(models.Model):
     def __str__(self):
         return f"PersonalDetails for {self.id}"
 
+    def convert_to_ai_readable(self):
+        return f"""
+        user first name is : {self.first_name}, user last name is : {self.last_name}, user date of birth is : {self.date_of_birth}
+        user measures are : {[measure.convert_to_ai_readable() for measure in self.measures.all()]}
+        """
+
 
 class CompanyDetails(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='company_details')
@@ -131,8 +137,6 @@ class User(AbstractBaseUser, PermissionsMixin):
         return self.email
 
 
-
-
 class Skill(models.Model):
     name = models.CharField(max_length=REGULAR_CHAR_LENGTH)
     type = models.CharField(max_length=REGULAR_CHAR_LENGTH, blank=True)
@@ -151,3 +155,8 @@ class Measures(models.Model):
 
     def __str__(self):
         return self.name
+
+    def convert_to_ai_readable(self):
+        return f"""
+        measure name is : {self.name}, measure description is : {self.description}, measure unit is : {self.unit}, measure value is : {self.value}
+        """

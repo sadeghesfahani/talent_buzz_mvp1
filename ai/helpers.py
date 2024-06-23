@@ -146,12 +146,12 @@ class AIBaseClass:
         return run
 
     def add_message_to_thread(self, thread_id: str, message: str) -> Thread:
-        try:
-            print ("canceling existing run")
-            self.client.beta.threads.runs.cancel(thread_id=thread_id,run_id="run_FxUYEQyRZfTYy2q7RmOhKkbR")
-            print("Cancelled existing run")
-        except Exception as e:
-            print(f"Failed to cancel existing run: {e}")
+        # try:
+        #     print ("canceling existing run")
+        #     self.client.beta.threads.runs.cancel(thread_id=thread_id,run_id="run_FxUYEQyRZfTYy2q7RmOhKkbR")
+        #     print("Cancelled existing run")
+        # except Exception as e:
+        #     print(f"Failed to cancel existing run: {e}")
         thread = self.client.beta.threads.retrieve(thread_id)
         self.client.beta.threads.messages.create(
             thread_id=thread_id,

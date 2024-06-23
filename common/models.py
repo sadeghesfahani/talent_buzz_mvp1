@@ -26,6 +26,10 @@ class Document(models.Model):
             self.file_id = uploaded_file.id
         super().save(force_insert, force_update, using, update_fields)
 
+    def convert_to_ai_readable(self):
+        return f"""
+        representetive file_id in vectore store is : {self.file_id}, user document description is : {self.description}
+        """
 
 @receiver(post_save, sender=Document)
 def set_file_id(sender, instance, **kwargs):
