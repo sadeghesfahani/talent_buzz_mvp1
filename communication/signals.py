@@ -26,15 +26,6 @@ def add_member_to_conversation(sender, instance, created, **kwargs):
         user = bee.user
         hive = instance.hive
         for conversation in hive.hive_conversations.all():
-            (conversation.participants.add(user)
-
-@receiver(post_save, sender=Membership))
-def add_member_to_conversation(sender, instance, created, **kwargs):
-    if created and instance.is_accepted:
-        bee = instance.bee
-        user = bee.user
-        hive = instance.hive
-        for conversation in hive.hive_conversations.all():
             conversation.participants.add(user)
 
 
