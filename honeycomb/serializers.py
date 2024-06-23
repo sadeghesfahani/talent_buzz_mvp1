@@ -12,30 +12,23 @@ class BeeSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class HiveSerializer(serializers.ModelSerializer):
-    tags = TagListSerializerField()
-    admins = UserSerializer(many=True, read_only=True)
-    hive_bees = BeeSerializer(many=True, read_only=True)
+
+
+class BeeWithDetailSerializer(serializers.ModelSerializer):
+    user = UserSerializer()
+
+    class Meta:
+        model = Bee
+        fields = '__all__'
+class HiveWiThDetailsSerializer(serializers.ModelSerializer):
+    hive_bees = BeeWithDetailSerializer(many=True)
 
     class Meta:
         model = Hive
         fields = '__all__'
 
-    def create(self, validated_data):
-        tags = validated_data.pop('tags', [])
-        print(tags)
-        hive = super().create(validated_data)
-        hive.tags.set(tags)  # Assuming tags are a ManyToMany field
-        return hive
-
-    def update(self, instance, validated_data):
-        tags = validated_data.pop('tags', [])
-        instance = super().update(instance, validated_data)
-        instance.tags.set(tags)  # Assuming tags are a ManyToMany field
-        return instance
-
-
 class NectarSerializer(serializers.ModelSerializer):
+    nectar_hive = HiveWiThDetailsSerializer(read_only=True)
     tags = TagListSerializerField()
     documents = serializers.ListField(
         child=serializers.FileField(max_length=100000, allow_empty_file=False, use_url=False),
@@ -49,20 +42,10 @@ class NectarSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class BeeWithDetailSerializer(serializers.ModelSerializer):
-    user = UserSerializer()
-
-    class Meta:
-        model = Bee
-        fields = '__all__'
 
 
-class HiveWiThDetailsSerializer(serializers.ModelSerializer):
-    hive_bees = BeeWithDetailSerializer(many=True)
 
-    class Meta:
-        model = Hive
-        fields = '__all__'
+
 
 
 class HiveRequestSerializer(serializers.ModelSerializer):
@@ -95,6 +78,50 @@ class MembershipSubmitSerializer(serializers.Serializer):
     hive = serializers.IntegerField(required=True)
 
 
+class HiveSerializer(serializers.ModelSerializer):
+    tags = TagListSerializerField()
+    admins = UserSerializer(many=True, read_only=True)
+    hive_bees = BeeSerializer(many=True, read_only=True)
+    nectars = NectarSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Hive
+        fields = '__all__'
+
+    def create(self, validated_data):
+        tags = validated_data.pop('tags', [])
+        print(tags)
+        hive = super().create(validated_data)
+        hive.tags.set(tags)  # Assuming tags are a ManyToMany field
+        return hive
+
+    def update(self, instance, validated_data):
+        tags = validated_data.pop('tags', [])
+        instance = super().update(instance, validated_data)
+        instance.tags.set(tags)  # Assuming tags are a ManyToMany field
+        return instance
+
+
+class CreateHiveRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HiveRequest
+        fields = '__all__'
+
+
+class ContractSerializer(serializers.ModelSerializer):
+    bees_with_detail = serializers.SerializerMethodField()
+    nectar = NectarSerializer(read_only=True)
+
+    class Meta:
+        model = Contract
+
+class CreateContractSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Contract
+        fields = '__all__'
+
+
+
 class ReportSerializer(serializers.ModelSerializer):
     hive = HiveSerializer(read_only=True)
     nectar = NectarSerializer(read_only=True)
@@ -108,6 +135,20 @@ class ReportSerializer(serializers.ModelSerializer):
 class CreateReportSerializer(serializers.ModelSerializer):
     class Meta:
         model = Report
+        fields = '__all__'
+
+
+class CreateNectarSerializer(serializers.ModelSerializer):
+    tags = TagListSerializerField()
+    documents = serializers.ListField(
+        child=serializers.FileField(max_length=100000, allow_empty_file=False, use_url=False),
+        write_only=True,
+        required=False
+    )
+    uploaded_documents = DocumentSerializer(many=True, read_only=True, source='documents')
+
+    class Meta:
+        model = Nectar
         fields = '__all__'
 
 

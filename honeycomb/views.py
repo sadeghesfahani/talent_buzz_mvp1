@@ -15,7 +15,8 @@ from .filters import HiveFilter, BeeFilter, NectarFilter, MembershipFilter, Cont
 from .honeycomb_service import NectarService, HiveService
 from .models import Hive, Bee, Membership, Nectar, HiveRequest, Contract, Report
 from .serializers import HiveSerializer, BeeSerializer, MembershipSerializer, NectarSerializer, HiveRequestSerializer, \
-    ContractSerializer, MembershipAcceptSerializer, ReportSerializer, HiveWiThDetailsSerializer, CreateReportSerializer
+    ContractSerializer, MembershipAcceptSerializer, ReportSerializer, HiveWiThDetailsSerializer, CreateReportSerializer, \
+    CreateNectarSerializer, CreateHiveRequestSerializer, CreateContractSerializer
 
 
 class HiveViewSet(viewsets.ModelViewSet):
@@ -119,7 +120,6 @@ class MembershipViewSet(viewsets.ModelViewSet):
 
 class NectarViewSet(viewsets.ModelViewSet):
     queryset = Nectar.objects.all()
-    serializer_class = NectarSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
     filterset_class = NectarFilter
@@ -138,14 +138,24 @@ class NectarViewSet(viewsets.ModelViewSet):
 
         return nectar
 
+    def get_serializer_class(self):
+        if self.action == "create":
+            return CreateNectarSerializer
+        else:
+            return NectarSerializer
+
 
 class HiveRequestViewSet(viewsets.ModelViewSet):
     queryset = HiveRequest.objects.all()
-    serializer_class = HiveRequestSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
     filterset_class = HiveRequestFilter
 
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return CreateHiveRequestSerializer
+        else:
+            return HiveRequestSerializer
     def get_queryset(self):
         user = self.request.user
         hives_admin = Hive.objects.filter(admins__in=[user])
@@ -221,11 +231,15 @@ class ReportViewSet(viewsets.ModelViewSet):
 
 class ContractViewSet(viewsets.ModelViewSet):
     queryset = Contract.objects.all()
-    serializer_class = ContractSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
     filterset_class = ContractFilter
 
+    def get_serializer_class(self):
+        if self.action == "create":
+            return CreateContractSerializer
+        else:
+            return ContractSerializer
     def perform_create(self, serializer):
         nectar = serializer.validated_data['nectar']
         applicant = serializer.validated_data['bee']
@@ -234,7 +248,7 @@ class ContractViewSet(viewsets.ModelViewSet):
     def perform_update(self, serializer):
         instance = self.get_object()
         if 'is_accepted' in serializer.validated_data and serializer.validated_data['is_accepted']:
-            NectarService.accept_nectar_application(instance, self.request.user.bee)
+            NectarService.accept_nectar_application(instance, self.request.user)
         return super().perform_update(serializer)
 
 
@@ -266,15 +280,15 @@ class MembershipAcceptView(APIView):
 
         if serializer.is_valid():
             hive_request_id = serializer.validated_data['hive_request_id']
-
-            hive = self.hive_service.get_hive(hive_request_id)
-            if not hive:
+            hive_request = HiveRequest.objects.get(id=hive_request_id)
+            hive = self.hive_service.get_hive(hive_request.hive.id)
+            if not hive_request:
                 return Response({"message": self.HIVE_REQUEST_NOT_FOUND}, status=status.HTTP_404_NOT_FOUND)
             if not hive.is_admin_by_user(request.user):
                 return Response({"message": self.NOT_HIVE_ADMIN}, status=status.HTTP_403_FORBIDDEN)
 
             hive.accept_application(request.user.bee)
-            hive_request = HiveRequest.objects.get(id=hive_request_id)
+
             hive_request.is_accepted = True
             hive_request.save()
             return Response({"message": self.MEMBERSHIP_ACCEPT_SUCCESS}, status=status.HTTP_200_OK)
