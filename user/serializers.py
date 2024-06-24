@@ -1,7 +1,7 @@
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
 
-from .models import User, PersonalDetails, CompanyDetails, FreelancerDetails, Address
+from .models import User, PersonalDetails, CompanyDetails, FreelancerDetails, Address, Skill
 
 
 class AddressSerializer(serializers.ModelSerializer):
@@ -121,8 +121,15 @@ class UserSerializer(serializers.ModelSerializer):
 
         self.update_or_create_nested_instance(instance, 'personal_details', PersonalDetails, personal_details_data)
         self.update_or_create_nested_instance(instance, 'company_details', CompanyDetails, company_details_data)
-        self.update_or_create_nested_instance(instance, 'freelancer_details', FreelancerDetails, freelancer_details_data)
+        self.update_or_create_nested_instance(instance, 'freelancer_details', FreelancerDetails,
+                                              freelancer_details_data)
         if addresses_data is not None:
             self.update_or_create_addresses(instance, addresses_data)
 
         return instance
+
+
+class SkillSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Skill
+        fields = '__all__'
