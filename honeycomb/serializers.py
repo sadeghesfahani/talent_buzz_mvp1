@@ -154,14 +154,27 @@ class CreateNectarSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         document_files = validated_data.pop('documents', [])
+        tags = validated_data.pop('tags', [])
         nectar = Nectar.objects.create(**validated_data)
-
+        nectar.tags.set(tags)
         # Handling document saving
         for doc_file in document_files:
             document = Document.objects.create(document=doc_file)
             nectar.documents.add(document)
 
         return nectar
+
+    def update(self, instance, validated_data):
+        document_files = validated_data.pop('documents', [])
+        tags = validated_data.pop('tags', [])
+        instance = super().update(instance, validated_data)
+        instance.tags.set(tags)
+        # Handling document saving
+        for doc_file in document_files:
+            document = Document.objects.create(document=doc_file)
+            instance.documents.add(document)
+
+        return instance
 
 
 class MembershipSerializer(serializers.ModelSerializer):
