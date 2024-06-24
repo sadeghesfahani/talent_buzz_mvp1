@@ -91,7 +91,6 @@ class HiveSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         tags = validated_data.pop('tags', [])
-        print(tags)
         hive = super().create(validated_data)
         hive.tags.set(tags)  # Assuming tags are a ManyToMany field
         return hive
@@ -159,7 +158,7 @@ class CreateNectarSerializer(serializers.ModelSerializer):
 
         # Handling document saving
         for doc_file in document_files:
-            document = Document.objects.create(file=doc_file)
+            document = Document.objects.create(document=doc_file)
             nectar.documents.add(document)
 
         return nectar

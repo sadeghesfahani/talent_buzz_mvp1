@@ -1,5 +1,6 @@
 from django.core.exceptions import ValidationError, PermissionDenied
 from django.db.models import Q
+from django.db.transaction import atomic
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
@@ -11,6 +12,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from common.models import Document
+from communication.models import Conversation, Notification
 from .filters import HiveFilter, BeeFilter, NectarFilter, MembershipFilter, ContractFilter, HiveRequestFilter, ReportsFilter
 from .honeycomb_service import NectarService, HiveService
 from .models import Hive, Bee, Membership, Nectar, HiveRequest, Contract, Report
@@ -26,10 +28,25 @@ class HiveViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_class = HiveFilter
 
+    @atomic
     def perform_create(self, serializer):
         hive = serializer.save()
         hive.admins.add(self.request.user)
-        return hive
+
+        # Create or get conversation linked to the hive
+        conversation, created = Conversation.objects.get_or_create(hive=hive, tag="general")
+
+        # Add all admins as participants
+        for admin in hive.admins.all():
+            conversation.participants.add(admin)
+            Notification.objects.create(
+                user=admin,
+                message=f"Your hive '{hive.name}' has been created.",
+                notification_type='info'
+            )
+
+        # Save the conversation to update participants
+        conversation.save()
 
     def perform_update(self, serializer):
         hive = self.get_object()

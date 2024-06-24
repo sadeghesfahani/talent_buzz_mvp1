@@ -93,7 +93,6 @@ class Hive(models.Model):
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
-        Conversation.objects.get_or_create(hive=self, tag="general")
 
     def __str__(self):
         return self.name
