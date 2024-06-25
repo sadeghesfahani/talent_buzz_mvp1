@@ -71,8 +71,6 @@ class AIBaseClass:
         :return: None
         """
 
-
-
         new_file_ids = self.get_new_file_ids(vector_store_id, document_queryset)
         if new_file_ids:
             asyncio.run(add_files_async(vector_store_id, new_file_ids))
@@ -147,12 +145,12 @@ class AIBaseClass:
         return run
 
     def add_message_to_thread(self, thread_id: str, message: str) -> Thread:
-        try:
-            print ("canceling existing run")
-            self.client.beta.threads.runs.cancel(thread_id=thread_id,run_id="run_EVZOB6zC8ODtkNGr2utZZmKm")
-            print("Cancelled existing run")
-        except Exception as e:
-            print(f"Failed to cancel existing run: {e}")
+        # try:
+        #     print("canceling existing run")
+        #     self.client.beta.threads.runs.cancel(thread_id=thread_id, run_id="run_EVZOB6zC8ODtkNGr2utZZmKm")
+        #     print("Cancelled existing run")
+        # except Exception as e:
+        #     print(f"Failed to cancel existing run: {e}")
         thread = self.client.beta.threads.retrieve(thread_id)
         self.client.beta.threads.messages.create(
             thread_id=thread_id,
@@ -202,6 +200,8 @@ async def create_file(vector_store_id, file_id):
     except Exception as e:
         print(f"Failed to add file {file_id} to vector store: {e}")
         raise e
+
+
 async def create_file(vector_store_id, file_id):
     loop = asyncio.get_event_loop()
     client = OpenAI(api_key=settings.OPEN_AI_API_KEY)
@@ -218,7 +218,8 @@ async def create_file(vector_store_id, file_id):
     except Exception as e:
         print(f"Failed to add file {file_id} to vector store: {e}")
 
-async def poll_file_availability(vector_store_id, file_id, timeout=300, poll_interval=5):
+
+async def poll_file_availability(vector_store_id, file_id, timeout=20, poll_interval=2):
     start_time = time.time()
     while time.time() - start_time < timeout:
         try:
@@ -231,3 +232,5 @@ async def poll_file_availability(vector_store_id, file_id, timeout=300, poll_int
 
         await asyncio.sleep(poll_interval)
     raise TimeoutError(f"File {file_id} did not become available within {timeout} seconds.")
+
+

@@ -111,7 +111,7 @@ class Bee(models.Model):
     DEFAULT_BEE_TYPE = 'worker'
     user = models.OneToOneField(settings.AUTH_USER_MODEL, related_name='bee',
                                 on_delete=models.CASCADE)  # User associated with this bee
-    bee_bio = models.TextField(blank=True)
+    bee_bio = models.TextField(blank=True, null=True)
     bee_type = models.CharField(max_length=10, choices=BEE_TYPE_CHOICES, default=DEFAULT_BEE_TYPE)
     documents = models.ManyToManyField(COMMON_DOCUMENT_MODEL, related_name='bee_documents', blank=True)
     change_history = HistoricalRecords()

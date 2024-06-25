@@ -90,7 +90,7 @@ class CompanyDetails(models.Model):
 
 class FreelancerDetails(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='freelancer_details')
-    hourly_rate = models.DecimalField(max_digits=DECIMAL_MAX_DIGITS, decimal_places=DECIMAL_DECIMAL_PLACES, blank=True)
+    hourly_rate = models.DecimalField(max_digits=DECIMAL_MAX_DIGITS, decimal_places=DECIMAL_DECIMAL_PLACES, blank=True, default=15)
     skills = models.ManyToManyField('Skill', related_name='user_skills', blank=True)
     experience = models.JSONField(blank=True, default=list)
     education = models.JSONField(blank=True, default=list)

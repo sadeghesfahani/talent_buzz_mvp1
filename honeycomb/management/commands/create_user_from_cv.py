@@ -1,12 +1,16 @@
 import os
 import time
-from django.core.management.base import BaseCommand
+
 from django.contrib.auth import get_user_model
 from django.core.files import File
+from django.core.management.base import BaseCommand
+
+from ai.helpers import AIBaseClass
+from ai.services import AIService
 from common.models import Document  # Assuming this is your Document model
-from django.conf import settings
 
 User = get_user_model()
+
 
 class Command(BaseCommand):
     help = 'Read files from a specified directory, create Document objects for the admin user, and process them with AI.'
@@ -27,17 +31,21 @@ class Command(BaseCommand):
             return
 
         document_ids = []
+        document_queryset = []
         for filename in os.listdir(directory_path):
             if self.validate_file_format(filename):
                 file_path = os.path.join(directory_path, filename)
                 document = self.create_document(file_path, admin_user)
                 if document:
                     document_ids.append(document.id)
+                    document_queryset.append(document)
             else:
                 self.stdout.write(self.style.WARNING(f'Skipped invalid file format: {filename}'))
 
         # Waiting for all files to obtain their file_ids or timeout
         self.wait_for_file_ids(document_ids)
+        ai_helper = AIBaseClass("backend_assistant")
+        ai_helper.add_documents_to_vector_store(ai_helper.base_vector_store, document_queryset)
 
         # Process each document with AI after file_id is obtained
         for document_id in document_ids:
@@ -47,20 +55,30 @@ class Command(BaseCommand):
             else:
                 self.stdout.write(self.style.ERROR(f'Document {document_id} did not receive a file_id'))
 
-    def wait_for_file_ids(self, document_ids, timeout=300):
+    def wait_for_file_ids(self, document_ids, timeout=10):
         start_time = time.time()
         while time.time() - start_time < timeout:
-            if all(Document.objects.filter(id__in=document_ids, file_id__isnull=False).count() == len(document_ids)):
-                return
-            time.sleep(10)  # Check every 10 seconds
-        self.stdout.write(self.style.ERROR('Timeout reached while waiting for file_ids'))
+            # Count the documents that have a non-null file_id
+            count_with_file_id = Document.objects.filter(id__in=document_ids, file_id__isnull=False).count()
+
+            # Check if the number of documents with file_ids matches the total number of documents
+            if count_with_file_id == len(document_ids):
+                return  # All documents have file_ids; exit the loop
+            print("put fetching file_ids into sleep for 2 seconds")
+            time.sleep(2)  # Wait for 10 seconds before checking again
+        else:
+            # This block executes if the while loop completes without returning (i.e., timeout reached)
+            self.stdout.write(self.style.ERROR('Timeout reached while waiting for file_ids'))
+
 
     def process_with_ai(self, document):
+        ai_service = AIService(document.user, "backend_assistant")
 
         # AI implementation comes here
         # Example placeholder:
         self.stdout.write(self.style.SUCCESS(f'Processing document {document.id} with AI'))
-        # Add actual AI processing logic here
+
+        ai_service.review_document_with_file_id(document.file_id)
 
     def validate_file_format(self, filename):
         valid_extensions = {'pdf', 'doc', 'docx'}  # Define acceptable formats

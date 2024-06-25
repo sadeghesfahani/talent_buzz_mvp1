@@ -25,7 +25,7 @@ class UserTests(TestCase):
                 }
             ]
         }
-        self.user = User.objects.create_user(email="existinguser@example.com", password="password123")
+        self.user = create_user(email="existinguser@example.com", password="password123")
 
     def test_create_user(self):
         response = self.client.post('/user/users/', self.user_data, format='json')

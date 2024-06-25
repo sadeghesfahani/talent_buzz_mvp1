@@ -1,6 +1,8 @@
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 
+from common.models import Document
+
 
 class HiveService:
     @staticmethod
@@ -76,3 +78,13 @@ class BeeService:
     def get_bee_nectars(bee) -> ['Nectar']:
         from .models import Nectar
         return Nectar.objects.filter(bee=bee)
+
+    @staticmethod
+    def create_bee(user, bio, document_id= None) -> 'Bee':
+        from .models import Bee
+        bee = Bee.objects.create(user=user, bee_bio=bio, bee_type=Bee.DEFAULT_BEE_TYPE)
+        if document_id:
+            document = Document.objects.get(id=document_id)
+            document.user = user
+            document.save()
+            bee.documents.add(document)
