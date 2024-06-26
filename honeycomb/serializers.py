@@ -179,6 +179,8 @@ class ReportSerializer(serializers.ModelSerializer):
     nectar = NectarSerializer(read_only=True)
     bee = BeeWithDetailSerializer(read_only=True)
 
+    uploaded_documents = DocumentSerializer(many=True, read_only=True, source='documents')
+
     class Meta:
         model = Report
         fields = '__all__'
@@ -188,10 +190,28 @@ class ReportSerializer(serializers.ModelSerializer):
 
 
 class CreateReportSerializer(serializers.ModelSerializer):
+    documents = serializers.ListField(
+        child=serializers.FileField(max_length=100000, allow_empty_file=False, use_url=False),
+        write_only=True,
+        required=False
+    )
+
+
+
     class Meta:
         model = Report
         fields = '__all__'
 
+    def create(self, validated_data):
+        document_files = validated_data.pop('documents', [])
+        report = Report.objects.create(**validated_data)
+
+        # Handling document saving
+        for doc_file in document_files:
+            document = Document.objects.create(document=doc_file, user=self.context['request'].user)
+            report.documents.add(document)
+
+        return report
 
 class CreateNectarSerializer(serializers.ModelSerializer):
     tags = TagListSerializerField()
