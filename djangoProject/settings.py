@@ -54,7 +54,7 @@ THIRD_PARTY_APPS = [
     'taggit',
 ]
 
-CUSTOM_APPS = ['user', 'honeycomb', 'authentication', 'common', 'communication', 'feedback', 'task', 'ai']
+CUSTOM_APPS = ['user', 'honeycomb', 'authentication', 'common', 'communication', 'feedback', 'task', 'ai', 'user_profile']
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + CUSTOM_APPS
 
 MIDDLEWARE = [
