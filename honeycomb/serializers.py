@@ -13,20 +13,21 @@ class BeeSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-
-
 class BeeWithDetailSerializer(serializers.ModelSerializer):
     user = UserSerializer()
 
     class Meta:
         model = Bee
         fields = '__all__'
+
+
 class HiveWiThDetailsSerializer(serializers.ModelSerializer):
     hive_bees = BeeWithDetailSerializer(many=True)
 
     class Meta:
         model = Hive
         fields = '__all__'
+
 
 class NectarSerializer(serializers.ModelSerializer):
     nectar_hive = HiveWiThDetailsSerializer(read_only=True)
@@ -37,13 +38,26 @@ class NectarSerializer(serializers.ModelSerializer):
         required=False
     )
     uploaded_documents = DocumentSerializer(many=True, read_only=True, source='documents')
+    has_application = serializers.SerializerMethodField()
 
     class Meta:
         model = Nectar
         fields = '__all__'
 
-
-
+    def get_has_application(self, obj):
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            user = request.user
+            contract = Contract.objects.filter(bee__user=user, nectar=obj).exists()
+            if not contract:
+                return False
+            else:
+                contract = Contract.objects.get(bee__user=user, nectar=obj)
+                if contract.is_accepted:
+                    return {'has_accepted': True}
+                else:
+                    return True
+        return False
 
 
 
@@ -51,6 +65,7 @@ class NectarSerializer(serializers.ModelSerializer):
 
 class HiveRequestSerializer(serializers.ModelSerializer):
     bee = BeeWithDetailSerializer(read_only=True)
+    hive = HiveWiThDetailsSerializer(read_only=True)
 
     class Meta:
         model = HiveRequest
@@ -59,6 +74,7 @@ class HiveRequestSerializer(serializers.ModelSerializer):
 
 class ContractSerializer(serializers.ModelSerializer):
     bees_with_detail = serializers.SerializerMethodField()
+    nectar = NectarSerializer(read_only=True)
 
     class Meta:
         model = Contract
@@ -91,7 +107,6 @@ class HiveSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         tags = validated_data.pop('tags', [])
-        print(tags)
         hive = super().create(validated_data)
         hive.tags.set(tags)  # Assuming tags are a ManyToMany field
         return hive
@@ -101,6 +116,38 @@ class HiveSerializer(serializers.ModelSerializer):
         instance = super().update(instance, validated_data)
         instance.tags.set(tags)  # Assuming tags are a ManyToMany field
         return instance
+
+class CreateHiveSerializer(serializers.ModelSerializer):
+    tags = TagListSerializerField()
+
+    documents = serializers.ListField(
+        child=serializers.FileField(max_length=100000, allow_empty_file=False, use_url=False),
+        write_only=True,
+        required=False
+    )
+
+    class Meta:
+        model = Hive
+        fields = '__all__'
+
+    def create(self, validated_data):
+        tags = validated_data.pop('tags', [])
+        document_files = validated_data.pop('documents', [])
+        hive = Hive.objects.create(**{k: v for k, v in validated_data.items() if k not in ['documents', 'tags', 'admins']})
+        docs = []
+        for doc_file in document_files:
+            document = Document.objects.create(document=doc_file, user=self.context['request'].user)
+            docs.append(document)
+        hive.documents.set(docs)
+        hive.tags.set(tags)  # Assuming tags are a ManyToMany field
+        return hive
+
+    def update(self, instance, validated_data):
+        tags = validated_data.pop('tags', [])
+        instance = super().update(instance, validated_data)
+        instance.tags.set(tags)  # Assuming tags are a ManyToMany field
+        return instance
+
 
 
 class CreateHiveRequestSerializer(serializers.ModelSerializer):
@@ -123,15 +170,17 @@ class CreateContractSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-
 class ReportSerializer(serializers.ModelSerializer):
     hive = HiveSerializer(read_only=True)
     nectar = NectarSerializer(read_only=True)
-    bee = BeeSerializer(read_only=True)
+    bee = BeeWithDetailSerializer(read_only=True)
 
     class Meta:
         model = Report
         fields = '__all__'
+
+
+
 
 
 class CreateReportSerializer(serializers.ModelSerializer):
@@ -159,7 +208,7 @@ class CreateNectarSerializer(serializers.ModelSerializer):
 
         # Handling document saving
         for doc_file in document_files:
-            document = Document.objects.create(file=doc_file)
+            document = Document.objects.create(document=doc_file, user=self.context['request'].user)
             nectar.documents.add(document)
 
         return nectar

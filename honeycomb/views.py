@@ -10,13 +10,13 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from common.models import Document
-from .filters import HiveFilter, BeeFilter, NectarFilter, MembershipFilter, ContractFilter, HiveRequestFilter, ReportsFilter
+from .filters import HiveFilter, BeeFilter, NectarFilter, MembershipFilter, ContractFilter, HiveRequestFilter, \
+    ReportsFilter
 from .honeycomb_service import NectarService, HiveService
 from .models import Hive, Bee, Membership, Nectar, HiveRequest, Contract, Report
 from .serializers import HiveSerializer, BeeSerializer, MembershipSerializer, NectarSerializer, HiveRequestSerializer, \
     ContractSerializer, MembershipAcceptSerializer, ReportSerializer, HiveWiThDetailsSerializer, CreateReportSerializer, \
-    CreateNectarSerializer, CreateHiveRequestSerializer, CreateContractSerializer
+    CreateNectarSerializer, CreateHiveRequestSerializer, CreateContractSerializer, BeeWithDetailSerializer, CreateHiveSerializer
 
 
 class HiveViewSet(viewsets.ModelViewSet):
@@ -26,10 +26,17 @@ class HiveViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_class = HiveFilter
 
+    def get_serializer_class(self):
+        if self.action == "create" or self.action == "update" or self.action == "partial_update":
+            return CreateHiveSerializer
+        else:
+            return HiveSerializer
+
+
+
     def perform_create(self, serializer):
         hive = serializer.save()
         hive.admins.add(self.request.user)
-        return hive
 
     def perform_update(self, serializer):
         hive = self.get_object()
@@ -100,10 +107,15 @@ class HiveViewSet(viewsets.ModelViewSet):
 
 class BeeViewSet(viewsets.ModelViewSet):
     queryset = Bee.objects.all()
-    serializer_class = BeeSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
     filterset_class = BeeFilter
+
+    def get_serializer_class(self):
+        if self.action == "create" or self.action == "partial_update" or self.action == "update":
+            return BeeSerializer
+        else:
+            return BeeWithDetailSerializer
 
 
 class MembershipViewSet(viewsets.ModelViewSet):
@@ -124,19 +136,19 @@ class NectarViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_class = NectarFilter
 
-    def perform_create(self, serializer):
-        documents = self.request.FILES.getlist('documents')
-        nectar = serializer.save()
-        for document in documents:
-            Document.objects.create(
-                user=self.request.user,
-                document=document,
-                description=f"Document for nectar {nectar.id}"
-            )
-            nectar.documents.add(document)
-        nectar.save()
-
-        return nectar
+    # def perform_create(self, serializer):
+    #     documents = self.request.FILES.getlist('documents')
+    #     nectar = serializer.save()
+    #     for document in documents:
+    #         Document.objects.create(
+    #             user=self.request.user,
+    #             document=document,
+    #             description=f"Document for nectar {nectar.id}"
+    #         )
+    #         nectar.documents.add(document.id)
+    #     nectar.save()
+    #
+    #     return nectar
 
     def get_serializer_class(self):
         if self.action == "create" or self.action == "update":
@@ -156,11 +168,13 @@ class HiveRequestViewSet(viewsets.ModelViewSet):
             return CreateHiveRequestSerializer
         else:
             return HiveRequestSerializer
+
     def get_queryset(self):
         user = self.request.user
         hives_admin = Hive.objects.filter(admins__in=[user])
         hive_ids = hives_admin.values_list('id', flat=True)
-        return HiveRequest.objects.filter(hive_id__in=hive_ids)
+
+        return HiveRequest.objects.filter(Q(hive_id__in=hive_ids) | Q(bee__user=user))
 
     def perform_create(self, serializer):
         hive = serializer.validated_data['hive']
@@ -181,7 +195,6 @@ class HiveRequestViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         raise MethodNotAllowed("DELETE method not allowed on this endpoint.")
-
 
     def _handle_application_response(self, application, user):
         if self._is_user_admin_of_hive(application.hive, user):
@@ -210,6 +223,7 @@ class ReportViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
     filterset_class = ReportsFilter
+
     def get_queryset(self):
         user = self.request.user
         member_hive_ids = Membership.objects.filter(bee__user=user).values_list('hive_id', flat=True)
@@ -218,7 +232,6 @@ class ReportViewSet(viewsets.ModelViewSet):
             Q(hive_id__in=member_hive_ids) |
             Q(hive_id__in=public_hive_ids)
         ).distinct()
-
 
     def get_serializer_class(self):
         if self.action == "create" or self.action == "update":
@@ -240,6 +253,7 @@ class ContractViewSet(viewsets.ModelViewSet):
             return CreateContractSerializer
         else:
             return ContractSerializer
+
     def perform_create(self, serializer):
         nectar = serializer.validated_data['nectar']
         applicant = serializer.validated_data['bee']
@@ -257,6 +271,7 @@ class MembershipAcceptView(APIView):
     HIVE_REQUEST_NOT_FOUND = "Hive Request not found"
     NOT_HIVE_ADMIN = "You are not an admin of this hive"
     FIELD_REQUIRED = "This field is required."
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.hive_service = HiveService()
@@ -287,7 +302,7 @@ class MembershipAcceptView(APIView):
             if not hive.is_admin_by_user(request.user):
                 return Response({"message": self.NOT_HIVE_ADMIN}, status=status.HTTP_403_FORBIDDEN)
 
-            hive.accept_application(request.user.bee)
+            hive.accept_application(hive_request.bee)
 
             hive_request.is_accepted = True
             hive_request.save()

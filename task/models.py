@@ -1,6 +1,7 @@
 from django.db import models
 from django.db.models.functions import datetime
 from simple_history.models import HistoricalRecords
+from django.apps import apps
 
 
 
@@ -29,7 +30,7 @@ class Task(models.Model):
     assigned_bees = models.ManyToManyField('honeycomb.Bee', related_name='tasks', blank=True)
     bee_selection = models.OneToOneField('BeeSelection', on_delete=models.CASCADE, related_name='task',
                                          null=True, blank=True)
-    reports = models.ManyToManyField('honeycomb.Report', related_name='tasks', blank=True)
+    # reports = models.ManyToManyField('honeycomb.Report', related_name='tasks', blank=True)
     required_number_of_bees = models.IntegerField(default=1)  # Number of bees required for the task
     is_completed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -74,6 +75,9 @@ class TaskAssignment(models.Model):
             self.is_accepted = True
             self.is_active = False
             self.accepted_at = datetime.datetime.now()
+            Contract = apps.get_model('honeycomb.Contract')
+            contract = Contract.objects.get(bee=self.bee, nectar=self.task.nectar)
+            self.task.contract = contract
             self.task.assigned_bees.add(self.bee)
             self.save()
             self.task.save()

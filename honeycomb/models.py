@@ -41,7 +41,7 @@ class Hive(models.Model):
     hive_bees = models.ManyToManyField('Bee', through='Membership')
     is_public = models.BooleanField(default=False)
     documents = models.ManyToManyField(COMMON_DOCUMENT_MODEL, related_name='hive_documents', blank=True)
-    status = models.CharField(max_length=255, blank=True)
+    status = models.CharField(max_length=255, blank=True, default="open")
     vector_store_id = models.CharField(max_length=255, blank=True)
     tags = TaggableManager()
     change_history = HistoricalRecords()
@@ -170,7 +170,7 @@ class Nectar(models.Model):
     updated_at = models.DateTimeField(auto_now=True)  # Timestamp when the gig was last updated
     deadline = models.DateTimeField(null=True, blank=True)  # Deadline for the gig
     required_bees = models.PositiveIntegerField(blank=True, null=True, default=1)  # Number of freelancers required
-    status = models.CharField(max_length=255, blank=True)  # Status of the gig
+    status = models.CharField(max_length=255, blank=True, default="open")  # Status of the gig
     documents = models.ManyToManyField(COMMON_DOCUMENT_MODEL, related_name='nectar_documents', blank=True)
     tags = TaggableManager()
     change_history = HistoricalRecords()
@@ -236,6 +236,7 @@ class HiveRequest(models.Model):
     motivation = models.TextField(blank=True)
     documents = models.ManyToManyField(COMMON_DOCUMENT_MODEL, related_name='hive_request_documents', blank=True)
     change_history = HistoricalRecords()
+
 
     def accept_application(self, user: settings.AUTH_USER_MODEL) -> 'Membership':
         self._validate_application()
@@ -332,8 +333,9 @@ class ReportManager(models.Manager):
 
 
 class Report(models.Model):
-    hive = models.ForeignKey(Hive, on_delete=models.CASCADE, related_name='hive_reports')
-    nectar = models.ForeignKey(Nectar, on_delete=models.CASCADE, related_name='nectar_reports')
+    hive = models.ForeignKey(Hive, on_delete=models.CASCADE, related_name='hive_reports', blank=True, null=True)
+    nectar = models.ForeignKey(Nectar, on_delete=models.CASCADE, related_name='nectar_reports', blank=True, null=True)
+    task = models.ForeignKey('task.Task', on_delete=models.CASCADE, related_name='task_reports', blank=True, null=True)
     bee = models.ForeignKey(Bee, on_delete=models.CASCADE, related_name='bee_reports')
     title = models.CharField(max_length=255)
     content = models.TextField()
