@@ -24,6 +24,8 @@ class BeeWithDetailSerializer(serializers.ModelSerializer):
 class HiveWiThDetailsSerializer(serializers.ModelSerializer):
     hive_bees = BeeWithDetailSerializer(many=True)
 
+    uploaded_documents = DocumentSerializer(many=True, read_only=True, source='documents')
+
     class Meta:
         model = Hive
         fields = '__all__'
@@ -100,6 +102,8 @@ class HiveSerializer(serializers.ModelSerializer):
     admins = UserSerializer(many=True, read_only=True)
     hive_bees = BeeSerializer(many=True, read_only=True)
     nectars = NectarSerializer(many=True, read_only=True)
+
+    uploaded_documents = DocumentSerializer(many=True, read_only=True, source='documents')
 
     class Meta:
         model = Hive
