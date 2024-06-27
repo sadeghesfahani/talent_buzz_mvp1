@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>WebSocket File Upload</title>
+</head>
+<body>
+    <h1>Upload and Send File via WebSocket</h1>
+    <input type="file" id="fileInput">
+    <button onclick="sendFile()">Send File</button>
+    <button onclick="playAudio()" style="display: none;" id="playButton">Play Audio</button>
+    <audio controls id="audioPlayer" style="display:none;"></audio>
+
+<script>
+        const ws = new WebSocket('ws://localhost:8000/ws/ai/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzE5ODM0MTg2LCJpYXQiOjE3MTk0MDIxODYsImp0aSI6IjcwNjk5ODk1OTU4ZDRlY2Q5Y2YxN2NiZTcwZWI2ZDU3IiwidXNlcl9pZCI6MX0.jpF93Y0lJ2DukBGKEJct2Zb9sz6UfmdjAj6KfOzKrLc');
+
+        let audioBuffer = null;
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+        ws.onopen = function(event) {
+            console.log("WebSocket is open now.");
+        };
+
+        ws.onmessage = async function(event) {
+            console.log("Received message from server");
+            if (event.data instanceof Blob) {
+                const arrayBuffer = await event.data.arrayBuffer();
+                audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                document.getElementById('playButton').style.display = 'inline';
+            } else {
+                console.log("Received non-audio message: ", event.data);
+            }
+        };
+
+        ws.onerror = function(event) {
+            console.error("WebSocket error observed: ", event);
+        };
+
+        ws.onclose = function(event) {
+            console.log("WebSocket is closed now.");
+        };
+
+        function sendFile() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert("Please select a file first!");
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const arrayBuffer = event.target.result;
+                ws.send(arrayBuffer);
+                alert("File sent!");
+            };
+
+            reader.onerror = function(event) {
+                console.error("File could not be read! Code " + event.target.error.code);
+            };
+
+            reader.readAsArrayBuffer(file);
+        }
+
+        function playAudio() {
+            const playButton = document.getElementById('playButton');
+            const audioPlayer = document.getElementById('audioPlayer');
+            const source = audioContext.createBufferSource();
+            source.buffer = audioBuffer;
+            source.connect(audioContext.destination);
+            source.start();
+
+            // Optionally, you can load the buffer into an <audio> element if needed
+            // This requires you to first convert the buffer back into a blob and then create an object URL
+            const blob = new Blob([audioBuffer], { type: 'audio/mpeg' });
+            audioPlayer.src = URL.createObjectURL(blob);
+            audioPlayer.style.display = 'block';
+            playButton.style.display = 'none';  // Hide the play button after starting playback
+        }
+    </script>
+</body>
+</html>

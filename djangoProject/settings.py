@@ -39,6 +39,7 @@ DJANGO_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'daphne',
     'django.contrib.staticfiles'
 ]
 
@@ -52,6 +53,8 @@ THIRD_PARTY_APPS = [
     'rest_framework_simplejwt',
     'django_filters',
     'taggit',
+    'channels',
+
 ]
 
 CUSTOM_APPS = ['user', 'honeycomb', 'authentication', 'common', 'communication', 'feedback', 'task', 'ai']
@@ -209,3 +212,15 @@ CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'UTC'
 
 IS_TEST = 'test' in sys.argv
+
+
+ASGI_APPLICATION = 'djangoProject.asgi.application'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('localhost', 6379)],  # Adjust if your Redis server is at a different address or port
+        },
+    },
+}

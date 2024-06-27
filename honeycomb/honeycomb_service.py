@@ -1,10 +1,11 @@
-from django.contrib.auth.models import User
+
 from django.core.exceptions import ValidationError
 
-from common.models import Document
 
 
 class HiveService:
+
+
     @staticmethod
     def submit_membership_application(hive, bee):
         from .models import HiveRequest, Membership
@@ -30,7 +31,7 @@ class HiveService:
         return Hive.objects.get(id=hive_id)
 
     @staticmethod
-    def get_user_hives(user: User) -> ['Hive']:
+    def get_user_hives(user: 'User') -> ['Hive']:
         from .models import Hive
         return Hive.objects.filter(admins=user)
 
@@ -60,7 +61,7 @@ class BeeService:
         return Bee.objects.filter(id__in=list_of_bee_ids)
 
     @staticmethod
-    def get_user_bees(user: User) -> ['Bee']:
+    def get_user_bees(user: 'User') -> ['Bee']:
         from .models import Bee
         return Bee.objects.filter(user=user)
 
@@ -81,6 +82,7 @@ class BeeService:
 
     @staticmethod
     def create_bee(user, bio, document_id= None) -> 'Bee':
+        from common.models import Document
         from .models import Bee
         bee = Bee.objects.create(user=user, bee_bio=bio, bee_type=Bee.DEFAULT_BEE_TYPE)
         if document_id:
