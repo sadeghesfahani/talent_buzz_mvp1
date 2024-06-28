@@ -1,15 +1,14 @@
 import asyncio
 import time
+from typing import Literal
 
 from django.conf import settings
-from django.contrib.auth.models import User
 from django.db.models import QuerySet
 from openai import OpenAI
 from openai.types.beta import VectorStore, Assistant, Thread
 from openai.types.beta.threads import Run
 
 import honeycomb.honeycomb_service
-from ai.models import AssistantInfo
 from common.models import Document
 from .models import Thread as ThreadModel
 
@@ -25,6 +24,24 @@ class AIBaseClass:
         self.functions = []
 
         self.assistant = self.get_assistant(assistant_type)
+
+    @staticmethod
+    def get_translation(audio_file) -> str:
+
+        transcript = client.audio.translations.create(
+            model="whisper-1",
+            file=("transcript.mp3", audio_file, 'audio/mpeg'),
+        )
+        return transcript.text
+
+    @staticmethod
+    def generate_audio(text: str, voice: Literal["alloy", "echo", "fable", "onyx", "nova", "shimmer"] = "alloy"):
+        response = client.audio.speech.create(
+            model="tts-1",
+            voice=voice,
+            input=text,
+        )
+        return response
 
     def get_new_file_ids(self, vector_store_id, document_queryset: QuerySet[Document]) -> [str]:
         """
@@ -71,8 +88,6 @@ class AIBaseClass:
         :return: None
         """
 
-
-
         new_file_ids = self.get_new_file_ids(vector_store_id, document_queryset)
         if new_file_ids:
             asyncio.run(add_files_async(vector_store_id, new_file_ids))
@@ -117,7 +132,8 @@ class AIBaseClass:
         return self.get_or_create_vector_store(vector_store_id)
 
     @staticmethod
-    def get_or_create_assistant_info_model_object() -> AssistantInfo:
+    def get_or_create_assistant_info_model_object() -> 'AssistantInfo':
+        from ai.models import AssistantInfo
         if AssistantInfo.objects.count() < 1:
             return AssistantInfo.objects.create()
         else:
@@ -129,7 +145,7 @@ class AIBaseClass:
         else:
             return self.client.beta.threads.retrieve(thread_id)
 
-    def get_or_create_thread_by_user(self, user: User) -> Thread:
+    def get_or_create_thread_by_user(self, user: 'User') -> Thread:
         thread_model_object = ThreadModel.objects.filter(user=user).first()
         if thread_model_object:
             return self.client.beta.threads.retrieve(thread_model_object.thread_id)
@@ -147,12 +163,12 @@ class AIBaseClass:
         return run
 
     def add_message_to_thread(self, thread_id: str, message: str) -> Thread:
-        try:
-            print ("canceling existing run")
-            self.client.beta.threads.runs.cancel(thread_id=thread_id,run_id="run_EVZOB6zC8ODtkNGr2utZZmKm")
-            print("Cancelled existing run")
-        except Exception as e:
-            print(f"Failed to cancel existing run: {e}")
+        # try:
+        #     print("canceling existing run")
+        #     self.client.beta.threads.runs.cancel(thread_id=thread_id, run_id="run_EVZOB6zC8ODtkNGr2utZZmKm")
+        #     print("Cancelled existing run")
+        # except Exception as e:
+        #     print(f"Failed to cancel existing run: {e}")
         thread = self.client.beta.threads.retrieve(thread_id)
         self.client.beta.threads.messages.create(
             thread_id=thread_id,
@@ -193,6 +209,9 @@ async def add_files_async(vector_store_id, file_ids):
 
 
 async def create_file(vector_store_id, file_id):
+    from django.conf import settings
+    from openai import OpenAI
+    client = OpenAI(api_key=settings.OPEN_AI_API_KEY)
     print(f"Adding file {file_id} to vector store {vector_store_id}")
     loop = asyncio.get_event_loop()
     try:
@@ -202,6 +221,8 @@ async def create_file(vector_store_id, file_id):
     except Exception as e:
         print(f"Failed to add file {file_id} to vector store: {e}")
         raise e
+
+
 async def create_file(vector_store_id, file_id):
     loop = asyncio.get_event_loop()
     client = OpenAI(api_key=settings.OPEN_AI_API_KEY)
@@ -218,7 +239,8 @@ async def create_file(vector_store_id, file_id):
     except Exception as e:
         print(f"Failed to add file {file_id} to vector store: {e}")
 
-async def poll_file_availability(vector_store_id, file_id, timeout=300, poll_interval=5):
+
+async def poll_file_availability(vector_store_id, file_id, timeout=20, poll_interval=2):
     start_time = time.time()
     while time.time() - start_time < timeout:
         try:

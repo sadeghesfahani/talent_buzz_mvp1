@@ -93,7 +93,6 @@ class Hive(models.Model):
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
-        Conversation.objects.get_or_create(hive=self, tag="general")
 
     def __str__(self):
         return self.name
@@ -112,7 +111,7 @@ class Bee(models.Model):
     DEFAULT_BEE_TYPE = 'worker'
     user = models.OneToOneField(settings.AUTH_USER_MODEL, related_name='bee',
                                 on_delete=models.CASCADE)  # User associated with this bee
-    bee_bio = models.TextField(blank=True)
+    bee_bio = models.TextField(blank=True, null=True)
     bee_type = models.CharField(max_length=10, choices=BEE_TYPE_CHOICES, default=DEFAULT_BEE_TYPE)
     documents = models.ManyToManyField(COMMON_DOCUMENT_MODEL, related_name='bee_documents', blank=True)
     change_history = HistoricalRecords()
@@ -284,6 +283,12 @@ class HiveRequest(models.Model):
     def __str__(self):
         return f"Application of {self.bee} to {self.hive}"
 
+    def convert_to_ai_readable(self):
+        return f"""
+        Application for {self.hive.convert_to_ai_readable()} by {self.bee.convert_to_ai_readable()}.
+        motivation : {self.motivation}
+        documents: {[document.convert_to_ai_readable() for document in self.documents.all()]}
+        """
 
 class Contract(models.Model):
     contract_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
@@ -320,6 +325,13 @@ class Contract(models.Model):
     def __str__(self):
         return f"Application for {self.nectar} by {self.bee}"
 
+    def convert_to_ai_readable(self):
+        return f"""
+        Contract for {self.nectar.convert_to_ai_readable()} by {self.bee.convert_to_ai_readable()}.
+        accepted rate : {self.accepted_rate}
+        documents: {[document.convert_to_ai_readable() for document in self.documents.all()]}
+        is accepted : {self.is_accepted}
+        """
 
 class ReportManager(models.Manager):
     def for_hive(self, hive: 'Hive') -> QuerySet['Report']:
@@ -344,5 +356,14 @@ class Report(models.Model):
     status = models.CharField(max_length=255, blank=True)
 
     objects = ReportManager()
+
+    def convert_to_ai_readable(self):
+        return f"""
+        Report for {self.hive.convert_to_ai_readable()} by {self.bee.convert_to_ai_readable()}.
+        title : {self.title}
+        content : {self.content}
+        documents: {[document.convert_to_ai_readable() for document in self.documents.all()]}
+        status : {self.status}
+        """
 
 

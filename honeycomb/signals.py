@@ -6,23 +6,13 @@ from openai import OpenAI
 
 from ai.helpers import AIBaseClass
 from ai.models import AssistantInfo
-from communication.models import Notification
+from communication.models import Notification, Conversation
 from honeycomb.tasks import sync_hive_vector_store
 from .models import Hive, Membership, Nectar, HiveRequest, Contract, Report, Bee
 
 client = OpenAI(api_key=settings.OPEN_AI_API_KEY)
 
 
-@receiver(post_save, sender=Hive)
-def hive_created(sender, instance, created, **kwargs):
-    if created:
-        # Notify admins of the new hive
-        for admin in instance.admins.all():
-            Notification.objects.create(
-                user=admin,
-                message=f"Your hive '{instance.name}' has been created.",
-                notification_type='info'
-            )
 
 
 @receiver(post_save, sender=Membership)
@@ -167,5 +157,3 @@ def sync_bee_files(sender, instance, action, reverse, model, pk_set, **kwargs):
     if action == "post_add" or action == "post_remove":
         base_vector_store = AssistantInfo.objects.first().base_vector_store_id
         AIBaseClass().add_documents_to_vector_store(base_vector_store, instance.documents.all())
-
-

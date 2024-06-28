@@ -16,6 +16,9 @@ class Conversation(models.Model):
     def __str__(self):
         return f"Conversation {self.id}"
 
+    def convert_to_ai_readable(self):
+        return f"conversation with ID {self.id}, the number of participants in this conversation are {self.participants.all().count()} . this conversation is belong to {self.hive.convert_to_ai_readable() if self.hive else self.nectar.convert_to_ai_readable()}, the 3 messages in this conversation are {', '.join([message.convert_to_ai_readable() for message in self.messages.all()[:3]])} ."
+
 
 class Message(models.Model):
     conversation = models.ForeignKey(Conversation, related_name='messages', on_delete=models.CASCADE)
@@ -28,6 +31,9 @@ class Message(models.Model):
     def __str__(self):
         return f"Message from {self.sender} at {self.timestamp}"
 
+    def convert_to_ai_readable(self):
+        return f"message with ID {self.id}, the sender of this message is {self.sender}, the content of this message is {self.content} .{f' this message contains a document with this details: {self.document.convert_to_ai_readable()}' if self.document else ''}"
+
 
 class Notification(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='notifications', on_delete=models.CASCADE)
@@ -38,5 +44,13 @@ class Notification(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
     change_history = HistoricalRecords()
 
+    def read_notification(self):
+        self.read = True
+        self.save()
+        return self
+
     def __str__(self):
         return f"Notification for {self.user}"
+
+    def convert_to_ai_readable(self):
+        return f"{self.message} ."

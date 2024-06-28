@@ -1,8 +1,11 @@
 # views.py
+from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import viewsets
-from .models import User
-from .serializers import UserSerializer
+
+from .filters import SkillFilter
+from .models import User, Skill
+from .serializers import UserSerializer, SkillSerializer
 from .swagger import CREATE_NEW_USER, UPDATE_AN_EXISTING_USER, PARTIAL_UPDATE_USER
 
 
@@ -34,3 +37,10 @@ class UserViewSet(viewsets.ModelViewSet):
     def partial_update(self, request, *args, **kwargs):
         kwargs['partial'] = True
         return self.update(request, *args, **kwargs)
+
+
+class SkillViewSet(viewsets.ModelViewSet):
+    queryset = Skill.objects.all()
+    serializer_class = SkillSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = SkillFilter

@@ -1,8 +1,11 @@
-from django.contrib.auth.models import User
+
 from django.core.exceptions import ValidationError
 
 
+
 class HiveService:
+
+
     @staticmethod
     def submit_membership_application(hive, bee):
         from .models import HiveRequest, Membership
@@ -28,9 +31,20 @@ class HiveService:
         return Hive.objects.get(id=hive_id)
 
     @staticmethod
-    def get_user_hives(user: User) -> ['Hive']:
+    def get_user_hives(user: 'User') -> ['Hive']:
         from .models import Hive
         return Hive.objects.filter(admins=user)
+
+    @staticmethod
+    def get_hive_queryset(hive_ids: [str]):
+        from .models import Hive
+        return Hive.objects.filter(id__in=hive_ids)
+
+    @staticmethod
+    def create_hive(user, name, description, hive_type, is_public) -> 'Hive':
+        from .models import Hive
+        hive = Hive.objects.create(admins=[user], name=name, description=description, hive_type=hive_type, is_public=is_public)
+        return hive
 
 
 class NectarService:
@@ -46,6 +60,18 @@ class NectarService:
     def accept_nectar_application(application, user):
         application.accept_application(user)
 
+    @staticmethod
+    def get_nectar_queryset(nectar_ids: [str]):
+        from .models import Nectar
+        return Nectar.objects.filter(id__in=nectar_ids)
+
+
+    @staticmethod
+    def create_nectar(user, name, description, nectar_type, is_public) -> 'Nectar':
+        from .models import Nectar
+        nectar = Nectar.objects.create(user=user, name=name, description=description, nectar_type=nectar_type, is_public=is_public)
+        return nectar
+
 
 class BeeService:
     @staticmethod
@@ -58,7 +84,7 @@ class BeeService:
         return Bee.objects.filter(id__in=list_of_bee_ids)
 
     @staticmethod
-    def get_user_bees(user: User) -> ['Bee']:
+    def get_user_bees(user: 'User') -> ['Bee']:
         from .models import Bee
         return Bee.objects.filter(user=user)
 
@@ -76,3 +102,22 @@ class BeeService:
     def get_bee_nectars(bee) -> ['Nectar']:
         from .models import Nectar
         return Nectar.objects.filter(bee=bee)
+
+    @staticmethod
+    def create_bee(user, bio, document_id= None) -> 'Bee':
+        from common.models import Document
+        from .models import Bee
+        bee = Bee.objects.create(user=user, bee_bio=bio, bee_type=Bee.DEFAULT_BEE_TYPE)
+        if document_id:
+            document = Document.objects.get(id=document_id)
+            document.user = user
+            document.save()
+            bee.documents.add(document)
+
+
+class ContractService:
+
+    @staticmethod
+    def get_nectar_requests(user):
+        from .models import Contract
+        return [" ,".join(contract.convert_to_ai_readable()) for contract in Contract.objects.filter(is_accepted=False, accepted_at=None)]
