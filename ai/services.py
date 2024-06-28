@@ -5,21 +5,25 @@ from django.contrib.auth import get_user_model
 from openai import OpenAI
 
 from common.models import Document
-from honeycomb.honeycomb_service import HiveService, BeeService
-from honeycomb.serializers import BeeSerializer
+from communication.websocket_helper import WebSocketHelper
+from honeycomb.honeycomb_service import HiveService, BeeService, NectarService
+from honeycomb.serializers import BeeSerializer, BeeWithDetailSerializer, NectarSerializer
 from user.services import UserService
 from .helpers import AIBaseClass
 from .models import Message, Thread
+from .serializers import HiveSerializer
 
 User = get_user_model()
 client = OpenAI(api_key=settings.OPEN_AI_API_KEY)
 
 
-def create_user(email, first_name, last_name, phone_number="", skills=None, certificates=None, education=None, bio=None, tags=None, file_id="",
+def create_user(email, first_name, last_name, phone_number="", skills=None, certificates=None, education=None, bio=None,
+                tags=None, file_id="",
                 **extra_fields):
     if certificates is None:
         certificates = []
-    print(f"Creating user with email: {email}, first_name: {first_name}, last_name: {last_name}, phone_number: {phone_number}, skills: {skills}, certificates: {certificates}, education: {education}, bio: {bio}, tags: {tags}, file_id: {file_id}")
+    print(
+        f"Creating user with email: {email}, first_name: {first_name}, last_name: {last_name}, phone_number: {phone_number}, skills: {skills}, certificates: {certificates}, education: {education}, bio: {bio}, tags: {tags}, file_id: {file_id}")
     try:
         user = UserService.create_user(email, first_name, last_name, phone_number, skills, certificates, education, bio,
                                        tags)
@@ -73,10 +77,8 @@ class AIService:
         self.ai.add_documents_to_vector_store(isolated_vector_store.id, [document])
 
         self.send_message(f"Review this file id: {file_id}", ai_type="backend_assistant",
-                                   additional_instructions=f'you need to specifically look into the file id {file_id} and call create_user function with the required arguments. note that everything should be in English',
-                                   vector_stores=[isolated_vector_store.id])
-
-
+                          additional_instructions=f'you need to specifically look into the file id {file_id} and call create_user function with the required arguments. note that everything should be in English',
+                          vector_stores=[isolated_vector_store.id])
 
     def process_ai_response(self, run):
         print(run.status)
@@ -120,16 +122,29 @@ class AIService:
             return self.last_message.response
 
     def show_bees_to_user(self, bees_id_list: [str]) -> str:
-        print(bees_id_list)
         bees_queryset = self.bee_service.get_bee_queryset(bees_id_list)
-        bees = BeeSerializer(bees_queryset, many=True)
-        print(bees.data)
-        return "data has been shown successfully"
+        bees = BeeWithDetailSerializer(bees_queryset, many=True)
+        WebSocketHelper.send_page_to_user(self.user, "show_bees", bees.data)
+        return "data has been shown successfully, user is seeing it on his/her screen"
+
+    def show_hives_to_user(self,hives_id_list: [str]) -> str:
+        hives_queryset = self.hive_service.get_hive_queryset(hives_id_list)
+        hives = HiveSerializer(hives_queryset, many=True)
+        WebSocketHelper.send_page_to_user(self.user, "show_hives", hives.data)
+        return "data has been shown successfully, user is seeing it on his/her screen"
+
+    def show_nectars_to_user(self, nectars_id_list: [str]) -> str:
+        nectars_queryset = NectarService.get_nectar_queryset(nectars_id_list)
+        nectars = NectarSerializer(nectars_queryset, many=True)
+        WebSocketHelper.send_page_to_user(self.user, "show_nectars", nectars.data)
+        return "data has been shown successfully, user is seeing it on his/her screen"
 
     def get_function_reference(self, function_name: str):
         functions = {
             "show_bees_to_user": self.show_bees_to_user,
             "create_user_profile": create_user,
+            "show_hives_to_user": self.show_hives_to_user,
+            "show_nectars_to_user": self.show_nectars_to_user
         }
         return functions.get(function_name, lambda **kwargs: print("Function not found"))
 

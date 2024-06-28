@@ -35,6 +35,11 @@ class HiveService:
         from .models import Hive
         return Hive.objects.filter(admins=user)
 
+    @staticmethod
+    def get_hive_queryset(hive_ids: [str]):
+        from .models import Hive
+        return Hive.objects.filter(id__in=hive_ids)
+
 
 class NectarService:
     @staticmethod
@@ -48,6 +53,11 @@ class NectarService:
     @staticmethod
     def accept_nectar_application(application, user):
         application.accept_application(user)
+
+    @staticmethod
+    def get_nectar_queryset(nectar_ids: [str]):
+        from .models import Nectar
+        return Nectar.objects.filter(id__in=nectar_ids)
 
 
 class BeeService:
