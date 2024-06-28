@@ -46,7 +46,7 @@ urlpatterns = [
     path('feedback/', include('feedback.urls')),
     path('task/', include('task.urls')),
     path('ai/', include('ai.urls')),
-    path('download/', include('common.urls')),
+    path('', include('common.urls')),
     path('profile/', include('user_profile.urls')),
     path('sentry-debug/', trigger_error),
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),

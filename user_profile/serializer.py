@@ -40,7 +40,6 @@ class FeedbackSerializer(serializers.ModelSerializer):
         fields = ['contract', 'communication', 'quality_of_work', 'punctuality', 'overall_satisfaction', 'experience', 'created_at']
 
 class UserProfileSerializer(serializers.ModelSerializer):
-    avatar = PhotoSerializer(read_only=True)
     personal_details = PersonalDetailsSerializer()
     created_hives = serializers.SerializerMethodField()
     member_hives = serializers.SerializerMethodField()

@@ -1,7 +1,7 @@
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
 
-from .models import User, PersonalDetails, CompanyDetails, FreelancerDetails, Address
+from .models import User, PersonalDetails, CompanyDetails, FreelancerDetails, Address, Skill
 
 
 class AddressSerializer(serializers.ModelSerializer):
@@ -37,6 +37,12 @@ class UserSerializer(serializers.ModelSerializer):
     addresses = AddressSerializer(many=True, required=False)
     feedback_aggregates = serializers.SerializerMethodField()
     bee = serializers.SerializerMethodField()
+
+    # skills = serializers.ListField(
+    #     child=serializers.CharField(),
+    #     write_only=True,
+    #     required=False
+    # )
 
     def get_bee(self, obj):
         from honeycomb.serializers import BeeSerializer
@@ -111,6 +117,12 @@ class UserSerializer(serializers.ModelSerializer):
         freelancer_details_data = validated_data.pop('freelancer_details', None)
         addresses_data = validated_data.pop('addresses', None)
         password = validated_data.pop('password', None)
+        # skills = validated_data.pop('skills', [])
+        #
+        # for skill in skills:
+        #     Skill.objects.create()
+        #
+        # instance.skills.set(skills)
 
         # Update User instance
         for attr, value in validated_data.items():
