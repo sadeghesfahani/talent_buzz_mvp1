@@ -2,6 +2,8 @@ from django.conf import settings
 from django.db import models
 from simple_history.models import HistoricalRecords
 
+from communication.websocket_helper import WebSocketHelper
+
 
 class Conversation(models.Model):
     participants = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='conversations')
@@ -28,6 +30,10 @@ class Message(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
     change_history = HistoricalRecords()
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        WebSocketHelper.send_message_to_conversation(self)
+
     def __str__(self):
         return f"Message from {self.sender} at {self.timestamp}"
 
@@ -49,8 +55,16 @@ class Notification(models.Model):
         self.save()
         return self
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        self.send_notification_via_ws()
+
     def __str__(self):
         return f"Notification for {self.user}"
+
+    # send notification to ws channels
+    def send_notification_via_ws(self):
+        WebSocketHelper.send_notification(self.user, self.message)
 
     def convert_to_ai_readable(self):
         return f"{self.message} ."
