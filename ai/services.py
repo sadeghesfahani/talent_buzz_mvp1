@@ -5,8 +5,9 @@ from django.contrib.auth import get_user_model
 from openai import OpenAI
 
 from common.models import Document
+from communication.services import NotificationService, ConversationService
 from communication.websocket_helper import WebSocketHelper
-from honeycomb.honeycomb_service import HiveService, BeeService, NectarService
+from honeycomb.honeycomb_service import HiveService, BeeService, NectarService, ContractService
 from honeycomb.serializers import BeeSerializer, BeeWithDetailSerializer, NectarSerializer
 from user.services import UserService
 from .helpers import AIBaseClass
@@ -95,7 +96,7 @@ class AIService:
                     arguments = {}
                 _function = self.get_function_reference(tool.function.name)
                 try:
-                    function_response = _function(**arguments)
+                    function_response = _function(**arguments, user=self.user)
                 except Exception as e:
                     print(f"Error processing function: {e}")
                     function_response = "Error processing function"
@@ -121,30 +122,42 @@ class AIService:
             print(self.last_message.response)
             return self.last_message.response
 
-    def show_bees_to_user(self, bees_id_list: [str]) -> str:
+    def show_bees_to_user(self, bees_id_list: [str],**kwargs) -> str:
         bees_queryset = self.bee_service.get_bee_queryset(bees_id_list)
         bees = BeeWithDetailSerializer(bees_queryset, many=True)
         WebSocketHelper.send_page_to_user(self.user, "show_bees", bees.data)
         return "data has been shown successfully, user is seeing it on his/her screen"
 
-    def show_hives_to_user(self,hives_id_list: [str]) -> str:
+    def show_hives_to_user(self,hives_id_list: [str],**kwargs) -> str:
         hives_queryset = self.hive_service.get_hive_queryset(hives_id_list)
         hives = HiveSerializer(hives_queryset, many=True)
         WebSocketHelper.send_page_to_user(self.user, "show_hives", hives.data)
         return "data has been shown successfully, user is seeing it on his/her screen"
 
-    def show_nectars_to_user(self, nectars_id_list: [str]) -> str:
+    def show_nectars_to_user(self, nectars_id_list: [str],**kwargs) -> str:
         nectars_queryset = NectarService.get_nectar_queryset(nectars_id_list)
         nectars = NectarSerializer(nectars_queryset, many=True)
         WebSocketHelper.send_page_to_user(self.user, "show_nectars", nectars.data)
         return "data has been shown successfully, user is seeing it on his/her screen"
 
     def get_function_reference(self, function_name: str):
+        print(function_name)
         functions = {
             "show_bees_to_user": self.show_bees_to_user,
             "create_user_profile": create_user,
             "show_hives_to_user": self.show_hives_to_user,
-            "show_nectars_to_user": self.show_nectars_to_user
+            "show_nectars_to_user": self.show_nectars_to_user,
+            "get_notifications": NotificationService.get_unread_notifications_AI_readable,
+            "get_conversations": ConversationService.get_conversations_AI_readable,
+            "get_hive_requests": HiveService.get_user_hives,
+            "get_nectar_requests": ContractService.get_nectar_requests,
+            "create_hive": HiveService.create_hive,
+            "create_nectar": NectarService.create_nectar,
+            # "create_hive_request": self.create_hive_request,
+            # "create_nectar_request": self.create_nectar_request,
+            # "accept_hive_request": self.accept_hive_request,
+            # "accept_nectar_request": self.accept_nectar_request,
+            # "create_message": self.create_message,
         }
         return functions.get(function_name, lambda **kwargs: print("Function not found"))
 

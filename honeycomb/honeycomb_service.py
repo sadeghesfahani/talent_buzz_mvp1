@@ -40,6 +40,12 @@ class HiveService:
         from .models import Hive
         return Hive.objects.filter(id__in=hive_ids)
 
+    @staticmethod
+    def create_hive(user, name, description, hive_type, is_public) -> 'Hive':
+        from .models import Hive
+        hive = Hive.objects.create(admins=[user], name=name, description=description, hive_type=hive_type, is_public=is_public)
+        return hive
+
 
 class NectarService:
     @staticmethod
@@ -58,6 +64,13 @@ class NectarService:
     def get_nectar_queryset(nectar_ids: [str]):
         from .models import Nectar
         return Nectar.objects.filter(id__in=nectar_ids)
+
+
+    @staticmethod
+    def create_nectar(user, name, description, nectar_type, is_public) -> 'Nectar':
+        from .models import Nectar
+        nectar = Nectar.objects.create(user=user, name=name, description=description, nectar_type=nectar_type, is_public=is_public)
+        return nectar
 
 
 class BeeService:
@@ -100,3 +113,11 @@ class BeeService:
             document.user = user
             document.save()
             bee.documents.add(document)
+
+
+class ContractService:
+
+    @staticmethod
+    def get_nectar_requests(user):
+        from .models import Contract
+        return [" ,".join(contract.convert_to_ai_readable()) for contract in Contract.objects.filter(is_accepted=False, accepted_at=None)]

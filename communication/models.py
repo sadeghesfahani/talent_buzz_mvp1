@@ -44,8 +44,13 @@ class Notification(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
     change_history = HistoricalRecords()
 
+    def read_notification(self):
+        self.read = True
+        self.save()
+        return self
+
     def __str__(self):
         return f"Notification for {self.user}"
 
     def convert_to_ai_readable(self):
-        return f"notification with ID {self.id}, the message this notification carries is {self.message} ."
+        return f"{self.message} ."
