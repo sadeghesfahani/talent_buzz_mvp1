@@ -30,7 +30,6 @@ class Task(models.Model):
     assigned_bees = models.ManyToManyField('honeycomb.Bee', related_name='tasks', blank=True)
     bee_selection = models.OneToOneField('BeeSelection', on_delete=models.CASCADE, related_name='task',
                                          null=True, blank=True)
-    # reports = models.ManyToManyField('honeycomb.Report', related_name='tasks', blank=True)
     required_number_of_bees = models.IntegerField(default=1)  # Number of bees required for the task
     is_completed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)

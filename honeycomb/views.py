@@ -156,19 +156,6 @@ class NectarViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_class = NectarFilter
 
-    # def perform_create(self, serializer):
-    #     documents = self.request.FILES.getlist('documents')
-    #     nectar = serializer.save()
-    #     for document in documents:
-    #         Document.objects.create(
-    #             user=self.request.user,
-    #             document=document,
-    #             description=f"Document for nectar {nectar.id}"
-    #         )
-    #         nectar.documents.add(document.id)
-    #     nectar.save()
-    #
-    #     return nectar
 
     def get_serializer_class(self):
         if self.action == "create" or self.action == "update":

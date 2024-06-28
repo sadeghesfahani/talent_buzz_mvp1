@@ -170,16 +170,16 @@ SIMPLE_JWT = {
     'JTI_CLAIM': 'jti',
 }
 
-# sentry_sdk.init(
-#     dsn="https://c9a33539b84305d9d8a9323e5a1eebae@o4507398276055040.ingest.de.sentry.io/4507398277627984",
-#     # Set traces_sample_rate to 1.0 to capture 100%
-#     # of transactions for performance monitoring.
-#     traces_sample_rate=1.0,
-#     # Set profiles_sample_rate to 1.0 to profile 100%
-#     # of sampled transactions.
-#     # We recommend adjusting this value in production.
-#     profiles_sample_rate=1.0,
-# )
+sentry_sdk.init(
+    dsn="https://c9a33539b84305d9d8a9323e5a1eebae@o4507398276055040.ingest.de.sentry.io/4507398277627984",
+    # Set traces_sample_rate to 1.0 to capture 100%
+    # of transactions for performance monitoring.
+    traces_sample_rate=1.0,
+    # Set profiles_sample_rate to 1.0 to profile 100%
+    # of sampled transactions.
+    # We recommend adjusting this value in production.
+    profiles_sample_rate=1.0,
+)
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000"]
@@ -215,8 +215,7 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'UTC'
 
-
-IS_TEST = True
+IS_TEST = 'test' in sys.argv
 
 
 
