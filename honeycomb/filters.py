@@ -1,5 +1,4 @@
 import django_filters
-from django.db.models import Q
 from taggit.models import Tag
 
 from .models import Hive, Bee, Nectar, Membership, Contract, HiveRequest, Report
@@ -14,13 +13,16 @@ class HiveFilter(django_filters.FilterSet):
 
     admin_id = django_filters.NumberFilter(method='filter_by_admin_id')
 
+    name = django_filters.CharFilter(field_name='name', lookup_expr='icontains')
+
     class Meta:
         model = Hive
         fields = {
-            'name': ['exact', 'icontains'],
+            'name': ['icontains'],
             'hive_type': ['exact'],
             'is_public': ['exact'],
             'tags': ['exact'],
+            'status': ['exact']
         }
 
     def filter_by_admin_id(self, queryset, name, value):
@@ -52,6 +54,7 @@ class NectarFilter(django_filters.FilterSet):
             'price': ['lt', 'gt'],
             'deadline': ['lt', 'gt'],
             'tags': ['exact'],
+            'status': ['exact'],
         }
 
 
@@ -71,6 +74,7 @@ class ContractFilter(django_filters.FilterSet):
         fields = {
             'nectar': ['exact'],
             'nectar__nectar_hive': ['exact'],  # 'nectar__nectar_hive__id' is also possible
+            'nectar__nectar_title': ['icontains'],  # 'nectar__nectar_hive__id' is also possible
             'bee': ['exact'],
             'is_accepted': ['exact'],
             'applied_at': ['lt', 'gt'],
@@ -101,4 +105,5 @@ class ReportsFilter(django_filters.FilterSet):
             'hive': ['exact'],
             'bee': ['exact'],
             'nectar': ['exact'],
+            'task': ['exact'],
         }
