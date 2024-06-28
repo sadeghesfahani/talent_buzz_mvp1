@@ -149,6 +149,14 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return self.email
 
+    @property
+    def first_name(self):
+        return self.personal_details.first_name if hasattr(self, 'personal_details') else None
+
+    @property
+    def last_name(self):
+        return self.personal_details.last_name if hasattr(self, 'personal_details') else None
+
     def convert_to_ai_readable(self):
         return f"""
         user email is : {self.email}

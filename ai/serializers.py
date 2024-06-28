@@ -42,6 +42,7 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['personal_details', 'company_details', 'freelancer_details']
+        ref_name = 'AppUser'
 
 
 class BeeSerializer(serializers.ModelSerializer):

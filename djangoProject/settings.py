@@ -40,7 +40,7 @@ DJANGO_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'daphne',
-    'django.contrib.staticfiles'
+    'django.contrib.staticfiles',
 ]
 
 THIRD_PARTY_APPS = [
@@ -54,6 +54,9 @@ THIRD_PARTY_APPS = [
     'django_filters',
     'taggit',
     'channels',
+
+    'helpdesk',
+
 
 ]
 
@@ -231,3 +234,6 @@ CHANNEL_LAYERS = {
     },
 }
 
+# helpdesk
+SITE_ID = 1
+HELPDESK_TEAMS_MODE_ENABLED=False
