@@ -37,6 +37,14 @@ class UserSerializer(serializers.ModelSerializer):
     addresses = AddressSerializer(many=True, required=False)
     feedback_aggregates = serializers.SerializerMethodField()
     bee = serializers.SerializerMethodField()
+    first_name = serializers.SerializerMethodField(required=False)
+    last_name = serializers.SerializerMethodField(required=False)
+
+    def get_first_name(self, obj):
+        return obj.personal_details.first_name if obj.personal_details else None
+
+    def get_last_name(self, obj):
+        return obj.personal_details.last_name if obj.personal_details else None
 
     def get_bee(self, obj):
         from honeycomb.serializers import BeeSerializer

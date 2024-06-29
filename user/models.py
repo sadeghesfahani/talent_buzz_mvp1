@@ -90,7 +90,8 @@ class CompanyDetails(models.Model):
 
 class FreelancerDetails(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='freelancer_details')
-    hourly_rate = models.DecimalField(max_digits=DECIMAL_MAX_DIGITS, decimal_places=DECIMAL_DECIMAL_PLACES, blank=True, default=15)
+    hourly_rate = models.DecimalField(max_digits=DECIMAL_MAX_DIGITS, decimal_places=DECIMAL_DECIMAL_PLACES, blank=True,
+                                      default=15)
     skills = models.ManyToManyField('Skill', related_name='user_skills', blank=True)
     experience = models.JSONField(blank=True, default=list)
     education = models.JSONField(blank=True, default=list)
@@ -148,6 +149,36 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
+
+    # @property
+    # def first_name(self):
+    #     # Ensures personal_details exists or creates it if it does not.
+    #     self._ensure_personal_details()
+    #     return self.personal_details.first_name
+    #
+    # @first_name.setter
+    # def first_name(self, value):
+    #     self._ensure_personal_details()
+    #     self.personal_details.first_name = value
+    #     self.personal_details.save()
+    #
+    # @property
+    # def last_name(self):
+    #     self._ensure_personal_details()
+    #     return self.personal_details.last_name
+    #
+    # @last_name.setter
+    # def last_name(self, value):
+    #     self._ensure_personal_details()
+    #     self.personal_details.last_name = value
+    #     self.personal_details.save()
+    #
+    # def _ensure_personal_details(self):
+    #     if not hasattr(self, 'personal_details') or self.personal_details is None:
+    #         # Automatically create PersonalDetails if not exist
+    #         personal_details = PersonalDetails.objects.get_or_create(user=self)[0]
+    #         personal_details.save()
+    #         self.personal_details = personal_details
 
     def convert_to_ai_readable(self):
         return f"""

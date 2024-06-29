@@ -5,50 +5,31 @@ from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 
 
-class ChatConsumer(AsyncWebsocketConsumer):
+class BaseConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        print("hi")
-        await self.accept()
-        print("accepted")
-
-    async def disconnect(self, close_code):
-        pass
-
-    async def receive(self, text_data):
-        text_data_json = json.loads(text_data)
-        message = text_data_json['message']
-
-        await self.send(text_data=json.dumps({
-            'message': message
-        }))
-
-
-class FrontEndConsumer(AsyncWebsocketConsumer):
-    async def connect(self):
-        # Check if the user is authenticated
         if self.scope["user"].is_authenticated:
-            # Use the user's ID to create a unique group name
-            self.room_group_name = f"user_{self.scope['user'].id}"
-
-            # Join the user to their unique group
-            await self.channel_layer.group_add(
-                self.room_group_name,
-                self.channel_name
-            )
-
+            self.room_group_name = self.generate_room_group_name()
+            await self.channel_layer.group_add(self.room_group_name, self.channel_name)
             await self.accept()
         else:
             await self.close()
 
     async def disconnect(self, close_code):
-        # Leave the group on disconnect
         if hasattr(self, 'room_group_name'):
-            await self.channel_layer.group_discard(
-                self.room_group_name,
-                self.channel_name
-            )
+            await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+
+    def generate_room_group_name(self):
+        raise NotImplementedError("Subclasses must implement this method.")
+
+
+class FrontEndConsumer(BaseConsumer):
+
+    def generate_room_group_name(self):
+        return f"user_{self.scope['user'].id}"
 
     async def receive(self, text_data=None, bytes_data=None):
+        from ai.helpers import AIBaseClass
+        from ai.services import AIService
         if bytes_data:
             # Check if the received file is a voice file
             if self.is_voice_file(bytes_data):
@@ -56,7 +37,13 @@ class FrontEndConsumer(AsyncWebsocketConsumer):
             else:
                 await self.send(text_data="Invalid file type.")
         if text_data:
-            pass
+            user = self.scope['user']
+            # Handle the text data
+            ai_service = await sync_to_async(AIService)(user, 'backend_assistant')
+            response = await sync_to_async(ai_service.send_message)(text_data)
+            voice = AIBaseClass.generate_audio(response)
+            await self.send_file_to_client(voice.content)
+            await self.send(text_data=response)
 
     def is_voice_file(self, bytes_data):
         # Use python-magic to detect the MIME type of the file
@@ -78,6 +65,8 @@ class FrontEndConsumer(AsyncWebsocketConsumer):
             await self.send_file_to_client(voice.content)
         else:
             response = await sync_to_async(AIService(user, 'backend_assistant').send_message)(text)
+            voice = AIBaseClass.generate_audio(response)
+            await self.send_file_to_client(voice.content)
             await self.send(text_data=response)
 
     async def convert_speech_to_text(self, file) -> str:
@@ -90,3 +79,33 @@ class FrontEndConsumer(AsyncWebsocketConsumer):
 
     async def send_component(self, data: dict):
         await self.send(text_data=json.dumps(data, indent=4))
+
+
+class NotificationConsumer(BaseConsumer):
+
+    def generate_room_group_name(self):
+        return f"user_notification_{self.scope['user'].id}"
+
+    async def receive(self, text_data=None, bytes_data=None):
+        # it shouldn't receive any message
+        pass
+
+    async def send_notification(self, data: dict):
+        await self.send(text_data=json.dumps(data, indent=4))
+
+
+class ConversationConsumer(BaseConsumer):
+
+    def generate_room_group_name(self):
+        return f"chat_{self.scope['url_route']['kwargs']['conversation_id']}"
+
+    async def receive(self, text_data=None, bytes_data=None):
+        # it shouldn't receive any message
+        pass
+
+    async def send_message(self, event):
+        message = event['message']
+
+        await self.send(text_data=json.dumps({
+            'message': message
+        }))
