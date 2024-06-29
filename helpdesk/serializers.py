@@ -117,7 +117,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = get_user_model()
-        fields = ('first_name', 'last_name', 'username', 'email', 'password')
+        fields = "__all__"
         ref_name = 'HelpDeskUser'
 
     def create(self, validated_data):
