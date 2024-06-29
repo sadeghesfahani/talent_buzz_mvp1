@@ -48,6 +48,13 @@ class AIService:
 
     def send_message(self, message: str, additional_instructions: str = "",
                      ai_type: str = "general_assistant", vector_stores=None):
+        # from honeycomb.models import Hive, Bee
+        # final_additional_instructions = f"""
+        #             hives information:
+        #             {[hive.convert_to_ai_readable() for hive in Hive.objects.all()]}
+        #             bees information:
+        #             {[bee.convert_to_ai_readable() for bee in Bee.objects.all()]}
+        #             """ + additional_instructions
 
         self.last_message = Message.objects.create(content=message, user=self.user, thread_id=self.local_thread_id)
         hives = self.hive_service.get_user_hives(self.user)
@@ -119,7 +126,7 @@ class AIService:
             response = client.beta.threads.messages.list(thread_id=run.thread_id).data[0]
             self.last_message.response = response.content[0].text.value
             self.last_message.save()
-            print(self.last_message.response)
+            print(self.last_message.response.encode('utf-8', errors='ignore'))
             return self.last_message.response
 
     def show_bees_to_user(self, bees_id_list: [str],**kwargs) -> str:
@@ -153,6 +160,7 @@ class AIService:
             "get_nectar_requests": ContractService.get_nectar_requests,
             "create_hive": HiveService.create_hive,
             "create_nectar": NectarService.create_nectar,
+            "get_bees": BeeService.get_user_bees_AI_readable,
             # "create_hive_request": self.create_hive_request,
             # "create_nectar_request": self.create_nectar_request,
             # "accept_hive_request": self.accept_hive_request,
