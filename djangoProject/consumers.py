@@ -60,11 +60,11 @@ class FrontEndConsumer(BaseConsumer):
         if user.is_superuser:
             ai_service = await sync_to_async(AIService)(user, 'backend_assistant')
             response = await sync_to_async(ai_service.send_message)(text)
-            print("Response", response)
             voice = AIBaseClass.generate_audio(response)
             await self.send_file_to_client(voice.content)
         else:
-            response = await sync_to_async(AIService(user, 'backend_assistant').send_message)(text)
+            ai_service = await sync_to_async(AIService)(user, 'backend_assistant')
+            response = await sync_to_async(ai_service.send_message)(text)
             voice = AIBaseClass.generate_audio(response)
             await self.send_file_to_client(voice.content)
             await self.send(text_data=response)

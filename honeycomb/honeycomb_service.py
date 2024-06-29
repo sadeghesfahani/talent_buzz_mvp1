@@ -114,6 +114,11 @@ class BeeService:
             document.save()
             bee.documents.add(document)
 
+    @staticmethod
+    def get_user_bees_AI_readable(**kwargs):
+        from .models import Bee
+        return " ,".join([bee.convert_to_ai_readable() for bee in Bee.objects.all()])
+
 
 class ContractService:
 
