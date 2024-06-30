@@ -46,7 +46,7 @@ urlpatterns = [
     path('feedback/', include('feedback.urls')),
     path('task/', include('task.urls')),
     path('ai/', include('ai.urls')),
-    path('helpdesk/', include('helpdesk.urls')),
+    # path('helpdesk/', include('helpdesk.urls')),
     path('', include('common.urls')),
     path('profile/', include('user_profile.urls')),
     path('sentry-debug/', trigger_error),

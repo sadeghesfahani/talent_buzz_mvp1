@@ -55,7 +55,7 @@ THIRD_PARTY_APPS = [
     'taggit',
     'channels',
 
-    'helpdesk',
+    # 'helpdesk',
 
 
 ]
