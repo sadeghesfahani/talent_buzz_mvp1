@@ -1,10 +1,9 @@
 from rest_framework import serializers
 from user.models import User
-from user.serializers import PersonalDetailsSerializer
+from user.serializers import PersonalDetailsSerializer, FreelancerDetailsSerializer, UserSerializer
 from honeycomb.models import Hive, Membership, Contract
 from task.models import TaskAssignment
 from feedback.models import Feedback
-from common.serializers import PhotoSerializer
 
 class HiveSerializer(serializers.ModelSerializer):
     class Meta:
@@ -34,13 +33,15 @@ class TaskAssignmentSerializer(serializers.ModelSerializer):
 
 class FeedbackSerializer(serializers.ModelSerializer):
     contract = ContractSerializer()
+    author = UserSerializer()
 
     class Meta:
         model = Feedback
-        fields = ['contract', 'communication', 'quality_of_work', 'punctuality', 'overall_satisfaction', 'experience', 'created_at']
+        fields = ['contract', 'communication', 'quality_of_work', 'punctuality', 'overall_satisfaction', 'experience', 'created_at', 'author']
 
 class UserProfileSerializer(serializers.ModelSerializer):
     personal_details = PersonalDetailsSerializer()
+    freelancer_details = FreelancerDetailsSerializer()
     created_hives = serializers.SerializerMethodField()
     member_hives = serializers.SerializerMethodField()
     contract_count = serializers.SerializerMethodField()
@@ -51,7 +52,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'id', 'username', 'email', 'personal_details', 'created_hives', 'member_hives',
-            'contract_count', 'task_assignment_count', 'feedbacks', 'avatar'
+            'contract_count', 'task_assignment_count', 'feedbacks', 'avatar', 'freelancer_details'
         ]
 
     def get_created_hives(self, obj):

@@ -31,6 +31,19 @@ class HiveWiThDetailsSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class NectarContractSerializer(serializers.ModelSerializer):
+    bee = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Contract
+        fields = '__all__'
+
+    def get_bee(self, obj):
+        if obj.bee is not None:
+            return BeeSerializer(obj.bee).data
+        else:
+            return None  # Or provide some default data
+
 class NectarSerializer(serializers.ModelSerializer):
     nectar_hive = HiveWiThDetailsSerializer(read_only=True)
     tags = TagListSerializerField()
@@ -41,6 +54,8 @@ class NectarSerializer(serializers.ModelSerializer):
     )
     uploaded_documents = DocumentSerializer(many=True, read_only=True, source='documents')
     has_application = serializers.SerializerMethodField()
+    applications = NectarContractSerializer(many=True, read_only=True)
+
 
     class Meta:
         model = Nectar

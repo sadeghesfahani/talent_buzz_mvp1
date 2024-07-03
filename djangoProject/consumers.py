@@ -50,7 +50,7 @@ class FrontEndConsumer(BaseConsumer):
         mime = magic.Magic(mime=True)
         file_type = mime.from_buffer(bytes_data)
         print("File type", file_type)
-        return file_type.startswith('audio/')
+        return True
 
     async def handle_voice_file(self, bytes_data):
         from ai.helpers import AIBaseClass

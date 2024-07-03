@@ -345,6 +345,7 @@ class Report(models.Model):
     hive = models.ForeignKey(Hive, on_delete=models.CASCADE, related_name='hive_reports', blank=True, null=True)
     nectar = models.ForeignKey(Nectar, on_delete=models.CASCADE, related_name='nectar_reports', blank=True, null=True)
     task = models.ForeignKey('task.Task', on_delete=models.CASCADE, related_name='task_reports', blank=True, null=True)
+    hours = models.FloatField(default=0.00)
     bee = models.ForeignKey(Bee, on_delete=models.CASCADE, related_name='bee_reports')
     title = models.CharField(max_length=255)
     content = models.TextField()
@@ -362,5 +363,3 @@ class Report(models.Model):
         documents: {[document.convert_to_ai_readable() for document in self.documents.all()]}
         status : {self.status}
         """
-
-

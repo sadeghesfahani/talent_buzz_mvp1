@@ -163,6 +163,19 @@ class NectarViewSet(viewsets.ModelViewSet):
         else:
             return NectarSerializer
 
+    @atomic
+    def perform_create(self, serializer):
+        nectar = serializer.save()
+
+        # Create or get conversation linked to the nectar
+        conversation, created = Conversation.objects.get_or_create(nectar=nectar, tag="general")
+
+        # Add all admins as participants
+        conversation.participants.add(self.request.user)
+
+        # Save the conversation to update participants
+        conversation.save()
+
 
 class HiveRequestViewSet(viewsets.ModelViewSet):
     queryset = HiveRequest.objects.all()

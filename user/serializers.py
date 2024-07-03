@@ -24,7 +24,14 @@ class CompanyDetailsSerializer(serializers.ModelSerializer):
         exclude = ('user',)
 
 
+class SkillSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Skill
+        fields = '__all__'
+
+
 class FreelancerDetailsSerializer(serializers.ModelSerializer):
+    skills = SkillSerializer(many=True, read_only=True)
     class Meta:
         model = FreelancerDetails
         exclude = ('user',)
@@ -37,14 +44,13 @@ class UserSerializer(serializers.ModelSerializer):
     addresses = AddressSerializer(many=True, required=False)
     feedback_aggregates = serializers.SerializerMethodField()
     bee = serializers.SerializerMethodField()
-    first_name = serializers.SerializerMethodField(required=False)
-    last_name = serializers.SerializerMethodField(required=False)
 
-    def get_first_name(self, obj):
-        return obj.personal_details.first_name if obj.personal_details else None
+    skills = serializers.ListField(
+        child=serializers.CharField(),
+        write_only=True,
+        required=False
+    )
 
-    def get_last_name(self, obj):
-        return obj.personal_details.last_name if obj.personal_details else None
 
     def get_bee(self, obj):
         from honeycomb.serializers import BeeSerializer
@@ -64,9 +70,15 @@ class UserSerializer(serializers.ModelSerializer):
         extra_kwargs = {'password': {'write_only': True}}
 
     @staticmethod
-    def update_or_create_nested_instance(user, association_name, associated_model, data):
+    def update_or_create_nested_instance(user, association_name, associated_model, data, skills=[]):
         if data:
             associated_instance, _ = associated_model.objects.update_or_create(user=user, defaults=data)
+            if association_name == "freelancer_details":
+                freelancer_skills = []
+                for skill in skills:
+                    new_or_existed_skill, _ = Skill.objects.get_or_create(name=skill)
+                    freelancer_skills.append(new_or_existed_skill)
+                associated_instance.skills.set(freelancer_skills)
             setattr(user, association_name, associated_instance)
 
     @staticmethod
@@ -99,6 +111,7 @@ class UserSerializer(serializers.ModelSerializer):
         freelancer_details_data = validated_data.pop('freelancer_details', None)
         addresses_data = validated_data.pop('addresses', None)
         password = validated_data.pop('password', None)
+        skills = validated_data.pop('skills', [])
 
         user = User(**validated_data)
         if password:
@@ -107,7 +120,7 @@ class UserSerializer(serializers.ModelSerializer):
 
         self.update_or_create_nested_instance(user, 'personal_details', PersonalDetails, personal_details_data)
         self.update_or_create_nested_instance(user, 'company_details', CompanyDetails, company_details_data)
-        self.update_or_create_nested_instance(user, 'freelancer_details', FreelancerDetails, freelancer_details_data)
+        self.update_or_create_nested_instance(user, 'freelancer_details', FreelancerDetails, freelancer_details_data, skills)
         if addresses_data:
             self.update_or_create_addresses(user, addresses_data)
 
@@ -119,6 +132,7 @@ class UserSerializer(serializers.ModelSerializer):
         freelancer_details_data = validated_data.pop('freelancer_details', None)
         addresses_data = validated_data.pop('addresses', None)
         password = validated_data.pop('password', None)
+        skills = validated_data.pop('skills', [])
 
         # Update User instance
         for attr, value in validated_data.items():
@@ -130,14 +144,10 @@ class UserSerializer(serializers.ModelSerializer):
         self.update_or_create_nested_instance(instance, 'personal_details', PersonalDetails, personal_details_data)
         self.update_or_create_nested_instance(instance, 'company_details', CompanyDetails, company_details_data)
         self.update_or_create_nested_instance(instance, 'freelancer_details', FreelancerDetails,
-                                              freelancer_details_data)
+                                              freelancer_details_data, skills)
         if addresses_data is not None:
             self.update_or_create_addresses(instance, addresses_data)
 
         return instance
 
 
-class SkillSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Skill
-        fields = '__all__'
