@@ -30,6 +30,7 @@ class FrontEndConsumer(BaseConsumer):
     async def receive(self, text_data=None, bytes_data=None):
         from ai.helpers import AIBaseClass
         from ai.services import AIService
+        print("Received data")
         if bytes_data:
             # Check if the received file is a voice file
             if self.is_voice_file(bytes_data):
@@ -40,6 +41,7 @@ class FrontEndConsumer(BaseConsumer):
             user = self.scope['user']
             # Handle the text data
             ai_service = await sync_to_async(AIService)(user, 'backend_assistant')
+            print("Text data", text_data)
             response = await sync_to_async(ai_service.send_message)(text_data)
             voice = AIBaseClass.generate_audio(response)
             await self.send_file_to_client(voice.content)
@@ -50,7 +52,7 @@ class FrontEndConsumer(BaseConsumer):
         mime = magic.Magic(mime=True)
         file_type = mime.from_buffer(bytes_data)
         print("File type", file_type)
-        return True
+        return file_type.startswith("audio")
 
     async def handle_voice_file(self, bytes_data):
         from ai.helpers import AIBaseClass

@@ -119,6 +119,12 @@ class BeeService:
         from .models import Bee
         return " ,".join([bee.convert_to_ai_readable() for bee in Bee.objects.all()])
 
+    @staticmethod
+
+    def get_bee_queryset_by_email(email_list: [str]):
+        from .models import Bee
+        return Bee.objects.filter(user__email__in=email_list)
+
 
 class ContractService:
 

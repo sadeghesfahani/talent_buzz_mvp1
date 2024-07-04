@@ -147,6 +147,12 @@ class AIService:
         WebSocketHelper.send_page_to_user(self.user, "show_nectars", nectars.data)
         return "data has been shown successfully, user is seeing it on his/her screen"
 
+    def show_bees_to_user_via_email(self, bees_email_list: [str],**kwargs) -> str:
+        bees_queryset = self.bee_service.get_bee_queryset_by_email(bees_email_list)
+        bees = BeeWithDetailSerializer(bees_queryset, many=True)
+        WebSocketHelper.send_page_to_user(self.user, "show_bees", bees.data)
+        return "data has been shown successfully, user is seeing it on his/her screen"
+
     def get_function_reference(self, function_name: str):
         print(function_name)
         functions = {
@@ -161,6 +167,7 @@ class AIService:
             "create_hive": HiveService.create_hive,
             "create_nectar": NectarService.create_nectar,
             "get_bees": BeeService.get_user_bees_AI_readable,
+            "show_bees_to_user_via_email": self.show_bees_to_user_via_email,
             # "create_hive_request": self.create_hive_request,
             # "create_nectar_request": self.create_nectar_request,
             # "accept_hive_request": self.accept_hive_request,
