@@ -43,6 +43,11 @@ class CustomUserManager(BaseUserManager):
         return self._create_user(email, password, is_staff=True, is_superuser=True, **extra_fields)
 
 
+class UserPreferences(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='user_preferences')
+    ai_language = models.CharField(max_length=50)
+
+
 class PersonalDetails(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='personal_details')
     first_name = models.CharField(max_length=REGULAR_CHAR_LENGTH, blank=True)

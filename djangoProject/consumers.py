@@ -39,35 +39,56 @@ class FrontEndConsumer(BaseConsumer):
                 await self.send(text_data="Invalid file type.")
         if text_data:
             user = self.scope['user']
+            user_language = await self.get_user_language(user)
+            print(user_language)
             # Handle the text data
             ai_service = await sync_to_async(AIService)(user, 'backend_assistant')
             print("Text data", text_data)
             response = await sync_to_async(ai_service.send_message)(text_data)
-            voice = AIBaseClass.generate_audio(response)
+            voice = AIBaseClass.generate_audio(response, user_language)
             await self.send_file_to_client(voice.content)
             await self.send(text_data=response)
+
+    async def get_user_language(self, user):
+        user_language = "English"  # default language
+        try:
+            user_preferences = await self.get_user_preferences(user)
+        except Exception as e:
+            return user_language  # return default language if error occurs
+
+        if user_preferences and user_preferences.ai_language:
+            user_language = user_preferences.ai_language
+
+        return user_language
+
+    @sync_to_async
+    def get_user_preferences(self, user):
+        return user.user_preferences
 
     def is_voice_file(self, bytes_data):
         # Use python-magic to detect the MIME type of the file
         mime = magic.Magic(mime=True)
         file_type = mime.from_buffer(bytes_data)
         print("File type", file_type)
-        return file_type.startswith("audio")
+        return True
+        # return file_type.startswith("audio")
 
     async def handle_voice_file(self, bytes_data):
         from ai.helpers import AIBaseClass
         from ai.services import AIService
         user = self.scope['user']
+        user_language = await self.get_user_language(user)
+
         text = await self.convert_speech_to_text(bytes_data)
         if user.is_superuser:
             ai_service = await sync_to_async(AIService)(user, 'backend_assistant')
             response = await sync_to_async(ai_service.send_message)(text)
-            voice = AIBaseClass.generate_audio(response)
+            voice = AIBaseClass.generate_audio(response, user_language)
             await self.send_file_to_client(voice.content)
         else:
             ai_service = await sync_to_async(AIService)(user, 'backend_assistant')
             response = await sync_to_async(ai_service.send_message)(text)
-            voice = AIBaseClass.generate_audio(response)
+            voice = AIBaseClass.generate_audio(response, user_language)
             await self.send_file_to_client(voice.content)
             await self.send(text_data=response)
 

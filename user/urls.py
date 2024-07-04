@@ -7,7 +7,6 @@ router = DefaultRouter()
 router.register(r'users', UserViewSet)
 router.register(r'skills', SkillViewSet)
 
-
 urlpatterns = [
-    path('', include(router.urls)),
+    path('', include(router.urls))
 ]

@@ -5,7 +5,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
-from .filters import MessageFilter, ConversationFilter
+from .filters import MessageFilter, ConversationFilter, NotificationFilter
 
 from .models import Conversation, Message, Notification
 from .permissions import IsParticipantOrPublicHive, IsMessageSenderOrParticipant, IsOwner
@@ -62,6 +62,8 @@ class NotificationViewSet(viewsets.ModelViewSet):
     queryset = Notification.objects.all()
     serializer_class = NotificationSerializer
     permission_classes = [IsAuthenticated, IsOwner]
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = NotificationFilter
 
     def list(self, request, *args, **kwargs):
         queryset = Notification.objects.filter(user=self.request.user)

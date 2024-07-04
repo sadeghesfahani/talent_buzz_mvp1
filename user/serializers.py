@@ -1,7 +1,7 @@
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
 
-from .models import User, PersonalDetails, CompanyDetails, FreelancerDetails, Address, Skill
+from .models import User, PersonalDetails, CompanyDetails, FreelancerDetails, Address, Skill, UserPreferences
 
 
 class AddressSerializer(serializers.ModelSerializer):
@@ -37,6 +37,12 @@ class FreelancerDetailsSerializer(serializers.ModelSerializer):
         exclude = ('user',)
 
 
+class UserPreferencesSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = UserPreferences
+        fields = ['ai_language']
+
 class UserSerializer(serializers.ModelSerializer):
     personal_details = PersonalDetailsSerializer(required=False)
     company_details = CompanyDetailsSerializer(required=False)
@@ -44,6 +50,7 @@ class UserSerializer(serializers.ModelSerializer):
     addresses = AddressSerializer(many=True, required=False)
     feedback_aggregates = serializers.SerializerMethodField()
     bee = serializers.SerializerMethodField()
+    user_preferences = UserPreferencesSerializer(required=False, read_only=True)
 
     skills = serializers.ListField(
         child=serializers.CharField(),

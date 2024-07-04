@@ -35,11 +35,22 @@ class AIBaseClass:
         return transcript.text
 
     @staticmethod
-    def generate_audio(text: str, voice: Literal["alloy", "echo", "fable", "onyx", "nova", "shimmer"] = "alloy"):
+    def generate_audio(text: str, language="English", voice: Literal["alloy", "echo", "fable", "onyx", "nova", "shimmer"] = "alloy"):
+        translated_text = text
+        if(language != "English"):
+            completion = client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {"role": "system", "content": f"You are a the best expert in {language} language. translate the user text to {language} and send the response without any extra text or signs or slash and etc"},
+                    {"role": "user", "content": text}
+                ]
+            )
+            translated_text = completion.choices[0].message.content
+        print(translated_text)
         response = client.audio.speech.create(
             model="tts-1",
             voice=voice,
-            input=text,
+            input=translated_text,
         )
         return response
 

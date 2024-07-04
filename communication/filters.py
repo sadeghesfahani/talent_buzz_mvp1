@@ -1,6 +1,6 @@
 import django_filters
 
-from .models import Conversation, Message
+from .models import Conversation, Message, Notification
 
 
 class ConversationFilter(django_filters.FilterSet):
@@ -17,4 +17,11 @@ class MessageFilter(django_filters.FilterSet):
         model = Message
         fields = {
             'conversation': ['exact']
+        }
+
+class NotificationFilter(django_filters.FilterSet):
+    class Meta:
+        model = Notification
+        fields = {
+            'user': ['exact']
         }
