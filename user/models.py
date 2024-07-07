@@ -136,6 +136,26 @@ class User(AbstractBaseUser, PermissionsMixin):
     settings = models.JSONField(blank=True, default=dict)
 
     # psychological and biological information
+    # example : {
+    #     "MBTI": {
+    #         "type": "INTJ",
+    #         "description": "Introverted, Intuitive, Thinking, Judging"
+    #     },
+    #     "Big_Five": {
+    #         "Openness": 85,
+    #         "Conscientiousness": 75,
+    #         "Extraversion": 60,
+    #         "Agreeableness": 70,
+    #         "Neuroticism": 40
+    #     },
+    #     "DiSC": {
+    #         "Dominance": 68,
+    #         "Influence": 52,
+    #         "Steadiness": 71,
+    #         "Conscientiousness": 85,
+    #         "profile_summary": "High C - Detail-oriented, analytical, and values stability and precision."
+    #     }
+    # }
     personality_type = models.JSONField(blank=True, default=dict)
     iq = models.IntegerField(blank=True, null=True)
 
