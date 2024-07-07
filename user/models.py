@@ -6,6 +6,7 @@ from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
 from django.db.models import Avg
+from taggit.managers import TaggableManager
 
 from feedback.models import Feedback
 from library.constants import REGULAR_CHAR_LENGTH, URL_LENGTH, PHONE_LENGTH
@@ -44,7 +45,6 @@ class CustomUserManager(BaseUserManager):
 
     def create_superuser(self, email, password=None, **extra_fields):
         return self._create_user(email, password, is_staff=True, is_superuser=True, **extra_fields)
-
 
 
 class Experience(models.Model):
@@ -115,6 +115,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     date_of_birth = models.DateField(blank=True, null=True)
     passport_number = models.CharField(max_length=REGULAR_CHAR_LENGTH, blank=True)
     language = models.CharField(max_length=REGULAR_CHAR_LENGTH, blank=True)
+
+    # Freelancer details
+    bio = models.TextField(blank=True)
+    tags = TaggableManager()
+    hourly_rate = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
 
     # Company details
     company_name = models.CharField(max_length=REGULAR_CHAR_LENGTH, blank=True)
@@ -215,9 +220,9 @@ class Skill(models.Model):
     equivalents = models.CharField(max_length=50, blank=True)
     description = models.TextField(blank=True)
     parents = models.ManyToManyField('self', related_name='sub_skills', symmetrical=False, blank=True)
+
     def __str__(self):
         return self.name
-
 
 
 class AvailableTimeSlotException(models.Model):
