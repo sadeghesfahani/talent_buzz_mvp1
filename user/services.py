@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.db import transaction
 
-from user.models import PersonalDetails, Skill, FreelancerDetails
+from user.models import Skill
 
 User = get_user_model()
 
@@ -39,25 +39,15 @@ class UserService:
         user.save()
 
         # Handle Personal Details, assumes there's a bio and tags field
-        personal_detail = PersonalDetails.objects.create(
-            user=user,
-            first_name=first_name,
-            last_name=last_name,
-        )
         # personal_detail.tags.set(tags)
 
-        freelancer_details = FreelancerDetails.objects.create(
-            user=user,
-        )
         # Assuming skills are to be related to user via many-to-many
         if skills is None:
             skills = []
         for skill_name in skills:
             skill, _ = Skill.objects.get_or_create(name=skill_name)
-            freelancer_details.skills.add(skill)
-        freelancer_details.education = education
-        freelancer_details.certification = certificates
-        freelancer_details.save()
+            user.skills.add(skill)
+        user.save()
 
         return user
 

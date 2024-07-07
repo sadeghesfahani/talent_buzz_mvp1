@@ -1,11 +1,14 @@
+from datetime import date, datetime
+from typing import Optional, List, Tuple, Iterator
+
+from dateutil.rrule import rrulestr
 from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
 from django.db.models import Avg
 
 from feedback.models import Feedback
-from library.constants import REGULAR_CHAR_LENGTH, URL_LENGTH, DECIMAL_MAX_DIGITS, DECIMAL_DECIMAL_PLACES, PHONE_LENGTH, \
-    LONG_TEXT_LENGTH
+from library.constants import REGULAR_CHAR_LENGTH, URL_LENGTH, PHONE_LENGTH
 from library.validators import PHONE_REGEX
 
 
@@ -43,75 +46,49 @@ class CustomUserManager(BaseUserManager):
         return self._create_user(email, password, is_staff=True, is_superuser=True, **extra_fields)
 
 
-class UserPreferences(models.Model):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='user_preferences')
-    ai_language = models.CharField(max_length=50)
+
+class Experience(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='experiences')
+    position = models.CharField(max_length=50)
+    company = models.CharField(max_length=50)
+    start_date = models.DateField()
+    end_date = models.DateField(null=True, blank=True)
+    related_skills = models.ManyToManyField('Skill', related_name='experiences', blank=True)
+    documents = models.ManyToManyField('common.Document', related_name='experiences', blank=True)
+    description = models.TextField(blank=True)
+
+    def experience_period(self):
+        if self.end_date:
+            delta = self.end_date - self.start_date
+        else:
+            delta = date.today() - self.start_date
+        return delta.days
 
 
-class PersonalDetails(models.Model):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='personal_details')
-    first_name = models.CharField(max_length=REGULAR_CHAR_LENGTH, blank=True)
-    last_name = models.CharField(max_length=REGULAR_CHAR_LENGTH, blank=True)
-    date_of_birth = models.DateField(blank=True, null=True)
-    passport_number = models.CharField(max_length=REGULAR_CHAR_LENGTH, blank=True)
-    measures = models.ManyToManyField('Measures', related_name='user_measures', blank=True)
-
-    def __str__(self):
-        return f"PersonalDetails for {self.id}"
-
-    def convert_to_ai_readable(self):
-        return f"""
-        user first name is : {self.first_name}, user last name is : {self.last_name}, user date of birth is : {self.date_of_birth}
-        user measures are : {[measure.convert_to_ai_readable() for measure in self.measures.all()]}
-        """
+class Education(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='educations')
+    degree = models.CharField(max_length=50)
+    description = models.TextField()
+    university = models.CharField(max_length=50)
+    documents = models.ManyToManyField('common.Document', related_name='educations', blank=True)
 
 
-class CompanyDetails(models.Model):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='company_details')
-    company_name = models.CharField(max_length=REGULAR_CHAR_LENGTH, blank=True)
-    kvk_number = models.CharField(max_length=REGULAR_CHAR_LENGTH, blank=True)
-    vat_id = models.CharField(max_length=REGULAR_CHAR_LENGTH, blank=True)
-    bank_account = models.CharField(max_length=REGULAR_CHAR_LENGTH, blank=True)
-    company_logo = models.ImageField(upload_to='company_logo', blank=True)
-    company_description = models.TextField(blank=True)
-    company_website = models.URLField(max_length=URL_LENGTH, blank=True)
-    company_size = models.CharField(max_length=REGULAR_CHAR_LENGTH, blank=True)
-    company_industry = models.CharField(max_length=REGULAR_CHAR_LENGTH, blank=True)
-    company_type = models.CharField(max_length=REGULAR_CHAR_LENGTH, blank=True)
-    company_founded = models.DateField(blank=True, null=True)
-    company_location = models.CharField(max_length=REGULAR_CHAR_LENGTH, blank=True)
-    company_specialities = models.JSONField(blank=True, default=list)
-    company_social_media = models.JSONField(blank=True, default=dict)
-
-    def __str__(self):
-        return f"CompanyDetails for {self.company_name}"
-
-    def convert_to_ai_readable(self):
-        return f"""
-        company name is : {self.company_name}, company description is : {self.company_description}, company specialities are : {self.company_specialities}
-        company social media are : {self.company_social_media}
-        """
+class Certificate(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='certifications')
+    documents = models.ManyToManyField('common.Document', related_name='certifications')
+    title = models.CharField(max_length=50)
+    institution = models.CharField(max_length=50)
+    date_earned = models.DateField()
+    description = models.TextField()
 
 
-class FreelancerDetails(models.Model):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='freelancer_details')
-    hourly_rate = models.DecimalField(max_digits=DECIMAL_MAX_DIGITS, decimal_places=DECIMAL_DECIMAL_PLACES, blank=True,
-                                      default=15)
-    skills = models.ManyToManyField('Skill', related_name='user_skills', blank=True)
-    experience = models.JSONField(blank=True, default=list)
-    education = models.JSONField(blank=True, default=list)
-    certification = models.JSONField(blank=True, default=list)
-    portfolio = models.JSONField(blank=True, default=list)
-
-    def __str__(self):
-        return f"FreelancerDetails for {self.id}"
-
-    def convert_to_ai_readable(self):
-        return f"""
-        freelancer hourly rate is : {self.hourly_rate}, freelancer skills are : {[skill.name for skill in self.skills.all()]}
-        freelancer experience is : {self.experience}, freelancer education is : {self.education}, freelancer certification is : {self.certification}
-        freelancer portfolio is : {self.portfolio}
-        """
+class Portfolio(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='portfolio')
+    title = models.CharField(max_length=50)
+    description = models.TextField(blank=True)
+    link = models.URLField(blank=True, null=True)
+    image = models.ImageField(upload_to='portfolio/', blank=True, null=True)
+    documents = models.ManyToManyField('common.Document', related_name='portfolios', blank=True)
 
 
 class User(AbstractBaseUser, PermissionsMixin):
@@ -132,6 +109,41 @@ class User(AbstractBaseUser, PermissionsMixin):
     # Dates
     date_joined = models.DateTimeField(auto_now_add=True)
 
+    # Personal information
+    first_name = models.CharField(max_length=REGULAR_CHAR_LENGTH, blank=True)
+    last_name = models.CharField(max_length=REGULAR_CHAR_LENGTH, blank=True)
+    date_of_birth = models.DateField(blank=True, null=True)
+    passport_number = models.CharField(max_length=REGULAR_CHAR_LENGTH, blank=True)
+    language = models.CharField(max_length=REGULAR_CHAR_LENGTH, blank=True)
+
+    # Company details
+    company_name = models.CharField(max_length=REGULAR_CHAR_LENGTH, blank=True)
+    kvk_number = models.CharField(max_length=REGULAR_CHAR_LENGTH, blank=True)
+    vat_id = models.CharField(max_length=REGULAR_CHAR_LENGTH, blank=True)
+    bank_account = models.CharField(max_length=REGULAR_CHAR_LENGTH, blank=True)
+    company_logo = models.ImageField(upload_to='company_logo', blank=True)
+    company_description = models.TextField(blank=True)
+    company_website = models.URLField(max_length=URL_LENGTH, blank=True)
+    company_size = models.CharField(max_length=REGULAR_CHAR_LENGTH, blank=True)
+    company_industry = models.CharField(max_length=REGULAR_CHAR_LENGTH, blank=True)
+    company_type = models.CharField(max_length=REGULAR_CHAR_LENGTH, blank=True)
+    company_founded = models.DateField(blank=True, null=True)
+    company_location = models.CharField(max_length=REGULAR_CHAR_LENGTH, blank=True)
+    company_specialities = models.JSONField(blank=True, default=list)
+    company_social_media = models.JSONField(blank=True, default=dict)
+
+    # settings
+    settings = models.JSONField(blank=True, default=dict)
+
+    # psychological and biological information
+    personality_type = models.JSONField(blank=True, default=dict)
+    iq = models.IntegerField(blank=True, null=True)
+
+    # Gamification
+    points = models.IntegerField(default=0)
+    level = models.IntegerField(default=1)
+
+    skills = models.ManyToManyField('Skill', related_name='users', blank=True)
     objects = CustomUserManager()
 
     USERNAME_FIELD = 'email'
@@ -155,71 +167,90 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return self.email
 
-    # @property
-    # def first_name(self):
-    #     # Ensures personal_details exists or creates it if it does not.
-    #     self._ensure_personal_details()
-    #     return self.personal_details.first_name
-    #
-    # @first_name.setter
-    # def first_name(self, value):
-    #     self._ensure_personal_details()
-    #     self.personal_details.first_name = value
-    #     self.personal_details.save()
-    #
-    # @property
-    # def last_name(self):
-    #     self._ensure_personal_details()
-    #     return self.personal_details.last_name
-    #
-    # @last_name.setter
-    # def last_name(self, value):
-    #     self._ensure_personal_details()
-    #     self.personal_details.last_name = value
-    #     self.personal_details.save()
-    #
-    # def _ensure_personal_details(self):
-    #     if not hasattr(self, 'personal_details') or self.personal_details is None:
-    #         # Automatically create PersonalDetails if not exist
-    #         personal_details = PersonalDetails.objects.get_or_create(user=self)[0]
-    #         personal_details.save()
-    #         self.personal_details = personal_details
+    def get_rank(self):
+        # I want to get the rank of the user based on the points in comparison to other users
+        users = User.objects.all().order_by('-points')
+        rank = 1
+        for user in users:
+            if user == self:
+                return rank
+            rank += 1
+        return rank
 
     def convert_to_ai_readable(self):
         return f"""
-        user email is : {self.email}
-        user username is : {self.username}
-        user phone number is : {self.phone_number}
-        user id is : {self.id}
-        user personal information:
-        {self.personal_details.convert_to_ai_readable() if hasattr(self, 'personal_details') else None}
-        user company information:
-        {self.company_details.convert_to_ai_readable() if hasattr(self, 'company_details') else None}
-        user freelancer information:
-        {self.freelancer_details.convert_to_ai_readable() if hasattr(self, 'freelancer_details') else None}
+        
         """
 
 
 class Skill(models.Model):
-    name = models.CharField(max_length=REGULAR_CHAR_LENGTH)
-    type = models.CharField(max_length=REGULAR_CHAR_LENGTH, blank=True)
-    equivalents = models.CharField(max_length=LONG_TEXT_LENGTH, blank=True)
-    parent = models.ForeignKey('Skill', on_delete=models.CASCADE, related_name='sub_skills', blank=True, null=True)
-
-    def __str__(self):
-        return self.name
-
-
-class Measures(models.Model):
-    name = models.CharField(max_length=REGULAR_CHAR_LENGTH)
+    TECHNICAL = 'Technical'
+    SOFT = 'Soft'
+    SKILL_TYPE_CHOICES = [
+        (TECHNICAL, 'Technical'),
+        (SOFT, 'Soft'),
+    ]
+    name = models.CharField(max_length=50)
+    type = models.CharField(max_length=50, choices=SKILL_TYPE_CHOICES, blank=True)
+    equivalents = models.CharField(max_length=50, blank=True)
     description = models.TextField(blank=True)
-    unit = models.CharField(max_length=REGULAR_CHAR_LENGTH)
-    value = models.CharField(blank=True, max_length=REGULAR_CHAR_LENGTH)
-
+    parents = models.ManyToManyField('self', related_name='sub_skills', symmetrical=False, blank=True)
     def __str__(self):
         return self.name
 
-    def convert_to_ai_readable(self):
-        return f"""
-        measure name is : {self.name}, measure description is : {self.description}, measure unit is : {self.unit}, measure value is : {self.value}
-        """
+
+
+class AvailableTimeSlotException(models.Model):
+    slot = models.ForeignKey('AvailableTimeSlot', related_name='exceptions', on_delete=models.CASCADE)
+    start_time = models.DateTimeField()
+    end_time = models.DateTimeField()
+    reason = models.CharField(max_length=255, blank=True)  # Optional reason for the exception
+
+    def __str__(self) -> str:
+        return f"Exception from {self.start_time} to {self.end_time} for {self.slot}: {self.reason if self.reason else 'No specified reason'}"
+
+
+class AvailableTimeSlot(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='available_time_slots')
+    start_time = models.DateTimeField()
+    end_time = models.DateTimeField()
+    recurrence_rule = models.CharField(max_length=255, blank=True)
+    recurrence_end = models.DateField(blank=True, null=True)
+    type = models.CharField(max_length=100)
+
+    def __str__(self):
+        return f"{self.type} for {self.user.username} from {self.start_time} to {self.end_time}"
+
+    def occurrences(self, end_date: Optional[datetime] = None) -> List[Tuple[datetime, datetime]]:
+        """Generate occurrences of the available time slot, considering exceptions."""
+        final_occurrences = []
+        if self.recurrence_rule:
+            # Calculate the end date using the smallest of the provided end_date or the recurrence_end
+            effective_end_date = min(self.recurrence_end if self.recurrence_end else end_date,
+                                     end_date) if end_date else self.recurrence_end
+            rule = rrulestr(self.recurrence_rule, dtstart=self.start_time)
+            for start in rule.between(self.start_time, effective_end_date, inc=True):
+                period = (start, start + (self.end_time - self.start_time))
+                final_occurrences.extend(self.adjust_period_based_on_exceptions(period))
+        else:
+            # No recurrence rule means a single occurrence
+            final_occurrences.append((self.start_time, self.end_time))
+        return final_occurrences
+
+    def adjust_period_based_on_exceptions(self, period: Tuple[datetime, datetime]) -> Iterator[
+        Tuple[datetime, datetime]]:
+        """Yield periods adjusted based on any exceptions."""
+        start, end = period
+        exceptions = self.exceptions.filter(start_time__lt=end, end_time__gt=start).order_by('start_time')
+
+        last_end = start
+        for exception in exceptions:
+            if exception.start_time > last_end:
+                # Yield the time before the exception starts
+                yield (last_end, exception.start_time)
+            # Update last_end to skip over the exception
+            last_end = max(last_end, exception.end_time)
+
+        if last_end < end:
+            # Yield the remaining time after the last exception
+            yield (last_end, end)

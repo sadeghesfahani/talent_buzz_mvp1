@@ -1,59 +1,114 @@
 # views.py
 from django_filters.rest_framework import DjangoFilterBackend
-from drf_yasg.utils import swagger_auto_schema
-from rest_framework import viewsets, status
-from rest_framework.decorators import action
-from rest_framework.response import Response
+from rest_framework import viewsets
+from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.permissions import AllowAny, IsAuthenticated
 
 from .filters import SkillFilter
-from .models import User, Skill, UserPreferences
-from .serializers import UserSerializer, SkillSerializer, UserPreferencesSerializer
-from .swagger import CREATE_NEW_USER, UPDATE_AN_EXISTING_USER, PARTIAL_UPDATE_USER
+from .models import User, Skill, Experience, Education, Certificate, Portfolio
+from .serializers import UserWithRelatedFieldsSerializer, SkillSerializer, UserBaseCreateSerializer, UserSerializer, \
+    UserListSerializer, \
+    EducationReadSerializer, EducationWriteSerializer, ExperienceReadSerializer, ExperienceWriteSerializer, \
+    CertificateReadSerializer, CertificateWriteSerializer, PortfolioReadSerializer, PortfolioWriteSerializer
 
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
-    serializer_class = UserSerializer
 
-    @swagger_auto_schema(
-        request_body=UserSerializer,
-        responses={200: UserSerializer()},
-        operation_description=CREATE_NEW_USER
-    )
-    def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return UserBaseCreateSerializer
+        if self.action == 'update':
+            return UserSerializer
+        if self.action == 'partial_update':
+            return UserSerializer
+        if self.action == 'retrieve':
+            return UserWithRelatedFieldsSerializer
+        return UserListSerializer
 
-    @swagger_auto_schema(
-        request_body=UserSerializer,
-        responses={200: UserSerializer()},
-        operation_description=UPDATE_AN_EXISTING_USER
-    )
-    def update(self, request, *args, **kwargs):
-        return super().update(request, *args, **kwargs)
-
-    @swagger_auto_schema(
-        request_body=UserSerializer,
-        responses={200: UserSerializer()},
-        operation_description=PARTIAL_UPDATE_USER
-    )
     def partial_update(self, request, *args, **kwargs):
         kwargs['partial'] = True
         return self.update(request, *args, **kwargs)
 
-    @action(detail=True, methods=['post'])
-    def set_preferences(self, request, pk=None):
-        user = self.get_object()
-        serializer = UserPreferencesSerializer(data=request.data)
 
-        if serializer.is_valid():
-            UserPreferences.objects.update_or_create(
-                user=user,
-                defaults=serializer.validated_data
-            )
-            return Response({'status': 'preferences set'})
+class ExperienceViewSet(viewsets.ModelViewSet):
+    queryset = Experience.objects.all()
+    # parser_classes = (MultiPartParser, FormParser,)
+
+    def get_serializer_class(self):
+        if self.action in ['list', 'retrieve']:
+            return ExperienceReadSerializer
+        return ExperienceWriteSerializer
+
+    def get_permissions(self):
+        """
+        Instantiates and returns the list of permissions that this view requires.
+        """
+        if self.action in ['list', 'retrieve']:
+            permission_classes = [AllowAny]
         else:
-            return Response(serializer.errors,
-                            status=status.HTTP_400_BAD_REQUEST)
+            permission_classes = [IsAuthenticated]
+        return [permission() for permission in permission_classes]
+
+
+class EducationViewSet(viewsets.ModelViewSet):
+    queryset = Education.objects.all()
+    # parser_classes = (MultiPartParser, FormParser,)
+
+    def get_serializer_class(self):
+        if self.action in ['list', 'retrieve']:
+            return EducationReadSerializer
+        return EducationWriteSerializer
+
+    def get_permissions(self):
+        """
+        Instantiates and returns the list of permissions that this view requires.
+        """
+        if self.action in ['list', 'retrieve']:
+            permission_classes = [AllowAny]
+        else:
+            permission_classes = [IsAuthenticated]
+        return [permission() for permission in permission_classes]
+
+
+class CertificateViewSet(viewsets.ModelViewSet):
+    queryset = Certificate.objects.all()
+    # parser_classes = (MultiPartParser, FormParser,)
+
+    def get_serializer_class(self):
+        if self.action in ['list', 'retrieve']:
+            return CertificateReadSerializer
+        return CertificateWriteSerializer
+
+    def get_permissions(self):
+        """
+        Instantiates and returns the list of permissions that this view requires.
+        """
+        if self.action in ['list', 'retrieve']:
+            permission_classes = [AllowAny]
+        else:
+            permission_classes = [IsAuthenticated]
+        return [permission() for permission in permission_classes]
+
+
+class PortfolioViewSet(viewsets.ModelViewSet):
+    queryset = Portfolio.objects.all()
+    # parser_classes = (MultiPartParser, FormParser,)
+
+    def get_serializer_class(self):
+        if self.action in ['list', 'retrieve']:
+            return PortfolioReadSerializer
+        return PortfolioWriteSerializer
+
+    def get_permissions(self):
+        """
+        Instantiates and returns the list of permissions that this view requires.
+        """
+        if self.action in ['list', 'retrieve']:
+            permission_classes = [AllowAny]
+        else:
+            permission_classes = [IsAuthenticated]
+        return [permission() for permission in permission_classes]
 
 
 class SkillViewSet(viewsets.ModelViewSet):

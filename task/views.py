@@ -34,22 +34,22 @@ class TaskAssignmentViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_class = TaskAssignmentFilter
 
-    def get_queryset(self):
-        bee = Bee.objects.get(user=self.request.user)
-        return TaskAssignment.objects.filter(bee=bee)
+    # def get_queryset(self):
+    #     bee = Bee.objects.get(user=self.request.user)
+    #     return TaskAssignment.objects.filter(bee=bee)
 
     def get_serializer_class(self):
         if self.action == 'create':
             return CreateTaskAssignmentSerializer
         else:
             return TaskAssignmentSerializer
-
-
-    @action(detail=True, methods=['get'], permission_classes=[IsAuthenticated, IsTaskAssignmentOwner])
-    def accept(self, request, pk=None):
-        assignment = self.get_object()
-        try:
-            assignment.accept()
-            return Response({'status': 'success', 'assignment_id': assignment.id}, status=status.HTTP_200_OK)
-        except ValidationError as e:
-            return Response({'status': 'error', 'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+#
+#
+#     @action(detail=True, methods=['get'], permission_classes=[IsAuthenticated, IsTaskAssignmentOwner])
+#     def accept(self, request, pk=None):
+#         assignment = self.get_object()
+#         try:
+#             assignment.accept()
+#             return Response({'status': 'success', 'assignment_id': assignment.id}, status=status.HTTP_200_OK)
+#         except ValidationError as e:
+#             return Response({'status': 'error', 'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)

@@ -21,7 +21,7 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
 from feedback.models import Feedback
-from .models import PersonalDetails, CompanyDetails, FreelancerDetails, User, Address
+from .models import User, Address
 
 
 class AddressInline(admin.StackedInline):
@@ -31,22 +31,11 @@ class AddressInline(admin.StackedInline):
     verbose_name_plural = 'Addresses'
 
 
-class PersonalDetailsInline(admin.StackedInline):
-    model = PersonalDetails
-    can_delete = False
-    verbose_name_plural = 'Personal Details'
 
 
-class CompanyDetailsInline(admin.StackedInline):
-    model = CompanyDetails
-    can_delete = False
-    verbose_name_plural = 'Company Details'
 
 
-class FreelancerDetailsInline(admin.StackedInline):
-    model = FreelancerDetails
-    can_delete = False
-    verbose_name_plural = 'Freelancer Details'
+
 
 
 class FeedbackInline(admin.TabularInline):
@@ -66,7 +55,7 @@ class FeedbackInline(admin.TabularInline):
 
 
 class UserAdmin(BaseUserAdmin):
-    inlines = (PersonalDetailsInline, CompanyDetailsInline, FreelancerDetailsInline, AddressInline, FeedbackInline)
+    inlines = (AddressInline, FeedbackInline)
 
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
@@ -81,10 +70,10 @@ class UserAdmin(BaseUserAdmin):
         'average_communication', 'average_quality_of_work', 'average_punctuality', 'average_overall_satisfaction'
     )
     list_filter = ('is_staff', 'is_active', 'is_superuser', 'date_joined')
-    search_fields = ('email', 'phone_number', 'personal_details__passport_number', 'company_details__company_name', 'freelancer_details__skills__name')
+    search_fields = ('email', 'phone_number', 'passport_number', 'company_details__company_name', 'freelancer_details__skills__name')
     ordering = ('email',)
     date_hierarchy = 'date_joined'
-    list_select_related = ('personal_details', 'company_details', 'freelancer_details')
+    list_select_related = ('company_details', 'freelancer_details')
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
