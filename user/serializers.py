@@ -53,6 +53,12 @@ class SkillSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'type', 'equivalents', 'description', 'parents', 'sub_skills']
 
 
+class SkillMinimalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Skill
+        fields = ['id', 'name', 'type']
+
+
 class PortfolioReadSerializer(serializers.ModelSerializer):
     documents = DocumentSerializer(many=True, required=False)
 

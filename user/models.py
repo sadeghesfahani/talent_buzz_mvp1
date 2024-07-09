@@ -70,6 +70,7 @@ class Education(models.Model):
     degree = models.CharField(max_length=50)
     description = models.TextField()
     university = models.CharField(max_length=50)
+    major = models.CharField(max_length=50)
     documents = models.ManyToManyField('common.Document', related_name='educations', blank=True)
 
 

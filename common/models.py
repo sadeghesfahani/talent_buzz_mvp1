@@ -11,10 +11,11 @@ client = OpenAI(api_key=settings.OPEN_AI_API_KEY)
 
 # Create your models here.
 class Document(models.Model):
-    user = models.ForeignKey('user.User', on_delete=models.CASCADE)
+    user = models.ForeignKey('user.User', on_delete=models.CASCADE, related_name='user_documents')
     document = models.FileField(upload_to='documents')
     file_id = models.CharField(max_length=255, blank=True)
     description = models.TextField(blank=True)
+    purpose = models.CharField(max_length=255, blank=True)
     isolated_vector_store = models.CharField(max_length=255, blank=True)
     hash = models.CharField(max_length=255, unique=True, blank=True)
     is_ai_sync = models.BooleanField(default=False)
