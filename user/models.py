@@ -97,7 +97,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     username = models.CharField(max_length=REGULAR_CHAR_LENGTH, blank=True, null=True)
     phone_number = models.CharField(
         validators=[PHONE_REGEX], max_length=PHONE_LENGTH,
-        blank=True, null=True, unique=True, db_index=True
+        blank=True, null=True, unique=True
     )
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
 
@@ -105,9 +105,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
+    is_freelancer = models.BooleanField(default=False, db_index=True)
+    is_company = models.BooleanField(default=False, db_index=True)
 
     # Dates
-    date_joined = models.DateTimeField(auto_now_add=True)
+    date_joined = models.DateTimeField(auto_now_add=True, db_index=True)
 
     # Personal information
     first_name = models.CharField(max_length=REGULAR_CHAR_LENGTH, blank=True)
@@ -166,7 +168,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     # Gamification
     points = models.IntegerField(default=0)
-    level = models.IntegerField(default=1)
+    level = models.IntegerField(default=1, db_index=True)
 
     skills = models.ManyToManyField('Skill', related_name='users', blank=True)
     objects = CustomUserManager()
@@ -279,3 +281,4 @@ class AvailableTimeSlot(models.Model):
         if last_end < end:
             # Yield the remaining time after the last exception
             yield (last_end, end)
+

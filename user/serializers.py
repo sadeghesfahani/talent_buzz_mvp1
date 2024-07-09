@@ -4,8 +4,10 @@ from common.models import Document
 from common.serializers import DocumentSerializer
 from .models import User, Address, Skill, Portfolio, Certificate, Education, Experience, AvailableTimeSlot
 
+
 class BaseMeta:
     exclude = ('user',)
+
 
 class UserAndDocumentMixin(serializers.ModelSerializer):
     def handle_documents(self, instance, documents_data):
@@ -33,6 +35,7 @@ class UserAndDocumentMixin(serializers.ModelSerializer):
         self.handle_documents(instance, documents_data)
         return instance
 
+
 class AddressSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False)
 
@@ -52,6 +55,7 @@ class SkillSerializer(serializers.ModelSerializer):
 
 class PortfolioReadSerializer(serializers.ModelSerializer):
     documents = DocumentSerializer(many=True, required=False)
+
     class Meta:
         model = Portfolio
         exclude = ('user',)
@@ -59,14 +63,15 @@ class PortfolioReadSerializer(serializers.ModelSerializer):
 
 class PortfolioWriteSerializer(UserAndDocumentMixin):
     documents = DocumentSerializer(many=True, required=False)
+
     class Meta:
         model = Portfolio
         exclude = ('user',)
 
 
-
 class CertificateReadSerializer(serializers.ModelSerializer):
     documents = DocumentSerializer(many=True, required=False)
+
     class Meta:
         model = Certificate
         fields = '__all__'
@@ -74,14 +79,15 @@ class CertificateReadSerializer(serializers.ModelSerializer):
 
 class CertificateWriteSerializer(UserAndDocumentMixin):
     documents = DocumentSerializer(many=True, required=False)
+
     class Meta:
         model = Certificate
         exclude = ('user',)
 
 
-
 class EducationReadSerializer(serializers.ModelSerializer):
     documents = DocumentSerializer(many=True, required=False)
+
     class Meta:
         model = Education
         fields = '__all__'
@@ -89,14 +95,15 @@ class EducationReadSerializer(serializers.ModelSerializer):
 
 class EducationWriteSerializer(UserAndDocumentMixin):
     documents = DocumentSerializer(many=True, required=False)
+
     class Meta:
         model = Education
         exclude = ('user',)
 
 
-
 class ExperienceReadSerializer(serializers.ModelSerializer):
     documents = DocumentSerializer(many=True, required=False)
+
     class Meta:
         model = Experience
         fields = '__all__'
@@ -104,10 +111,10 @@ class ExperienceReadSerializer(serializers.ModelSerializer):
 
 class ExperienceWriteSerializer(UserAndDocumentMixin):
     documents = DocumentSerializer(many=True, required=False)
+
     class Meta:
         model = Experience
         exclude = ('user',)
-
 
 
 class AvailableTimeSlotSerializer(serializers.ModelSerializer):
