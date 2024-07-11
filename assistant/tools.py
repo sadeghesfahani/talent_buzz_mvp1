@@ -9,6 +9,7 @@ from django.contrib.auth import get_user_model
 from django.db.models import QuerySet
 from openai import OpenAI
 
+from assistant.models import Usage
 from common.models import Document
 
 User = get_user_model()
@@ -22,27 +23,27 @@ class Assistant:
                  tread_id=None, format_type: typing.Literal["text", "json_object"] = "text",
                  expected_dictionary: typing.Optional[dict] = None,
                  model: typing.Literal[
-                    "gpt-4o",
-                    "gpt-4o-2024-05-13",
-                    "gpt-4-turbo",
-                    "gpt-4-turbo-2024-04-09",
-                    "gpt-4-0125-preview",
-                    "gpt-4-turbo-preview",
-                    "gpt-4-1106-preview",
-                    "gpt-4-vision-preview",
-                    "gpt-4",
-                    "gpt-4-0314",
-                    "gpt-4-0613",
-                    "gpt-4-32k",
-                    "gpt-4-32k-0314",
-                    "gpt-4-32k-0613",
-                    "gpt-3.5-turbo",
-                    "gpt-3.5-turbo-16k",
-                    "gpt-3.5-turbo-0613",
-                    "gpt-3.5-turbo-1106",
-                    "gpt-3.5-turbo-0125",
-                    "gpt-3.5-turbo-16k-0613",
-            ] = "gpt-4o",
+                     "gpt-4o",
+                     "gpt-4o-2024-05-13",
+                     "gpt-4-turbo",
+                     "gpt-4-turbo-2024-04-09",
+                     "gpt-4-0125-preview",
+                     "gpt-4-turbo-preview",
+                     "gpt-4-1106-preview",
+                     "gpt-4-vision-preview",
+                     "gpt-4",
+                     "gpt-4-0314",
+                     "gpt-4-0613",
+                     "gpt-4-32k",
+                     "gpt-4-32k-0314",
+                     "gpt-4-32k-0613",
+                     "gpt-3.5-turbo",
+                     "gpt-3.5-turbo-16k",
+                     "gpt-3.5-turbo-0613",
+                     "gpt-3.5-turbo-1106",
+                     "gpt-3.5-turbo-0125",
+                     "gpt-3.5-turbo-16k-0613",
+                 ] = "gpt-4o",
                  ):
         self.user = user
         self.document_query = document_query
@@ -82,6 +83,7 @@ class Assistant:
                 assistant_id=self.assistant_id,
                 additional_instructions=additional_instructions,
             )
+
         return self.__process_ai_response(run)
 
     def __prepare(self):
@@ -92,6 +94,7 @@ class Assistant:
             self.__prepare_thread()
 
     def __prepare_assistant(self):
+        print(self.__tools)
         assistant = self.client.beta.assistants.create(
             instructions=self.instruction,
             name="Math Tutor",
@@ -118,12 +121,12 @@ class Assistant:
 
     def __prepare_thread(self):
         self.thread_id = self.client.beta.threads.create(
-            metadata={"assistant_id": self.assistant_id, "user_id": self.user.id}
+            metadata={"assistant_id": self.assistant_id, "user_id": str(self.user.id)}
         ).id
 
         self.client.beta.threads.messages.create(
             thread_id=self.thread_id,
-            content=User.convert_to_ai_readable(),
+            content=self.user.convert_to_ai_readable(),
             role="user"
         )
 
@@ -156,10 +159,19 @@ class Assistant:
             param_description = param_descriptions.get(name, "No description provided.")
 
             # Parameter properties
-            parameters_dict["properties"][name] = {
-                "type": param_type,
-                "description": param_description
-            }
+            if param_type == "array":
+                item_types = [self.__format_type_hint(t) for t in type_hint.__args__]
+                parameters_dict["properties"][name] = {
+                    "type": param_type,
+                    "description": param_description,
+                    "items": {"type": item_types[0] if len(item_types) == 1 else item_types}
+                }
+
+            else:
+                parameters_dict["properties"][name] = {
+                    "type": param_type,
+                    "description": param_description
+                }
             if param.default is param.empty:
                 parameters_dict["required"].append(name)
 
@@ -180,11 +192,7 @@ class Assistant:
                 types = [self.__format_type_hint(t) for t in type_hint.__args__ if t is not type(None)]
                 return types[0] if len(types) == 1 else ' | '.join(types)
             elif origin in [list, set, tuple]:
-                item_types = [self.__format_type_hint(t) for t in type_hint.__args__]
-                return {
-                    "type": "array",
-                    "items": item_types[0] if len(item_types) == 1 else item_types
-                }
+                return "array"
             elif origin is dict:
                 key_type, value_type = type_hint.__args__
                 return {
@@ -230,7 +238,11 @@ class Assistant:
                     arguments = {}
                 _function = self.__get_function_reference(tool.function.name)
                 try:
-                    function_response = _function(**arguments, user=self.user)
+                    # print(arguments, self.user)
+                    arguments['user'] = self.user
+                    print(arguments)
+                    function_response = _function(**arguments)
+                    print(function_response)
                 except Exception as e:
                     print(f"Error processing function: {e}")
                     function_response = "Error processing function"
@@ -269,7 +281,15 @@ class Assistant:
                     else:
                         raise ValueError("Failed to get valid JSON response after retries")
                 return response_data
-
+            print(run.usage)
+            run_usage = run.usage
+            if run_usage:
+                Usage.objects.create(
+                    user=self.user, model=self.model, type="txt",
+                    completion_tokens=run_usage.completion_tokens,
+                    prompt_tokens=run_usage.prompt_tokens,
+                    run_id=run.id
+                )
             return response.content[0].text.value
 
     def __get_function_reference(self, name: str):

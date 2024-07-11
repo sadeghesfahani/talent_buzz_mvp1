@@ -21,7 +21,7 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 
 from feedback.models import Feedback
-from .models import User, Address
+from .models import User, Address, Certificate, Education,Portfolio,Experience
 
 
 class AddressInline(admin.StackedInline):
@@ -31,21 +31,16 @@ class AddressInline(admin.StackedInline):
     verbose_name_plural = 'Addresses'
 
 
-
-
-
-
-
-
-
 class FeedbackInline(admin.TabularInline):
     model = Feedback
     extra = 0
     fk_name = 'recipient'
     readonly_fields = (
-        'feedback_link', 'communication', 'quality_of_work', 'punctuality', 'overall_satisfaction', 'experience', 'created_at'
+        'feedback_link', 'communication', 'quality_of_work', 'punctuality', 'overall_satisfaction', 'experience',
+        'created_at'
     )
-    fields = ('feedback_link', 'communication', 'quality_of_work', 'punctuality', 'overall_satisfaction', 'experience', 'created_at')
+    fields = ('feedback_link', 'communication', 'quality_of_work', 'punctuality', 'overall_satisfaction', 'experience',
+              'created_at')
 
     def feedback_link(self, obj):
         url = reverse('admin:feedback_feedback_change', args=[obj.id])
@@ -59,21 +54,24 @@ class UserAdmin(BaseUserAdmin):
 
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
-        ('Personal info', {'fields': ('phone_number', 'avatar')}),
-        ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser')}),
+        ('Personal info', {'fields': ('phone_number', 'avatar', 'first_name', 'last_name',)}),
+        ('Flags', {'fields': ('is_active', 'is_staff', 'is_superuser', 'is_freelancer', 'is_company')}),
+        ('Freelancer details', {'fields': ('headline','bio','tags','skills')}),
         ('Important dates', {'fields': ('last_login', 'date_joined')}),
-        ('Rate', {'fields': ('average_communication', 'average_quality_of_work', 'average_punctuality', 'average_overall_satisfaction')}),
+        ('Rate', {'fields': (
+        'average_communication', 'average_quality_of_work', 'average_punctuality', 'average_overall_satisfaction')}),
     )
-    readonly_fields = ('date_joined','average_communication', 'average_quality_of_work', 'average_punctuality', 'average_overall_satisfaction')
+    readonly_fields = ('date_joined', 'average_communication', 'average_quality_of_work', 'average_punctuality',
+                       'average_overall_satisfaction')
     list_display = (
         'email', 'is_staff', 'is_active', 'is_superuser',
         'average_communication', 'average_quality_of_work', 'average_punctuality', 'average_overall_satisfaction'
     )
     list_filter = ('is_staff', 'is_active', 'is_superuser', 'date_joined')
-    search_fields = ('email', 'phone_number', 'passport_number', 'company_details__company_name', 'freelancer_details__skills__name')
+    search_fields = ('email', 'phone_number', 'passport_number')
     ordering = ('email',)
     date_hierarchy = 'date_joined'
-    list_select_related = ('company_details', 'freelancer_details')
+    # list_select_related = ('company_details', 'freelancer_details')
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
@@ -97,7 +95,8 @@ class UserAdmin(BaseUserAdmin):
     average_punctuality.short_description = 'Avg Punctuality'
 
     def average_overall_satisfaction(self, obj):
-        return Feedback.objects.filter(recipient=obj).aggregate(Avg('overall_satisfaction'))['overall_satisfaction__avg']
+        return Feedback.objects.filter(recipient=obj).aggregate(Avg('overall_satisfaction'))[
+            'overall_satisfaction__avg']
 
     average_overall_satisfaction.short_description = 'Avg Overall Satisfaction'
 
@@ -109,4 +108,9 @@ class UserAdmin(BaseUserAdmin):
             links.append(format_html('<a href="{}">{}</a>', url, feedback.id))
         return mark_safe(', '.join(links))
 
+
 admin.site.register(User, UserAdmin)
+admin.site.register(Certificate)
+admin.site.register(Education)
+admin.site.register(Portfolio)
+admin.site.register(Experience)

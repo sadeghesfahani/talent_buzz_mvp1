@@ -50,6 +50,7 @@ urlpatterns = [
     path('', include('common.urls')),
     path('profile/', include('user_profile.urls')),
     path('sentry-debug/', trigger_error),
+    path('assistant/', include('assistant.urls')),
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
 ]
 

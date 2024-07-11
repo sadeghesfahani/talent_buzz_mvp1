@@ -78,8 +78,8 @@ class Certificate(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='certifications')
     documents = models.ManyToManyField('common.Document', related_name='certifications')
     title = models.CharField(max_length=50)
-    institution = models.CharField(max_length=50)
-    date_earned = models.DateField()
+    institution = models.CharField(max_length=50, blank=True)
+    date_earned = models.DateField(null=True, blank=True)
     description = models.TextField()
 
 
@@ -121,6 +121,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     # Freelancer details
     bio = models.TextField(blank=True)
+    headline = models.CharField(max_length=REGULAR_CHAR_LENGTH, blank=True)
     tags = TaggableManager()
     hourly_rate = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
 
@@ -282,4 +283,3 @@ class AvailableTimeSlot(models.Model):
         if last_end < end:
             # Yield the remaining time after the last exception
             yield (last_end, end)
-

@@ -60,7 +60,7 @@ THIRD_PARTY_APPS = [
 
 ]
 
-CUSTOM_APPS = ['user', 'honeycomb', 'authentication', 'common', 'communication', 'feedback', 'task', 'ai', 'user_profile']
+CUSTOM_APPS = ['user', 'honeycomb', 'authentication', 'common', 'communication', 'feedback', 'task', 'ai', 'user_profile', 'assistant']
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + CUSTOM_APPS
 
 MIDDLEWARE = [
@@ -149,11 +149,11 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'user.User'
 
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    )
-}
+# REST_FRAMEWORK = {
+#     'DEFAULT_AUTHENTICATION_CLASSES': (
+#         'rest_framework_simplejwt.authentication.JWTAuthentication',
+#     )
+# }
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=5),

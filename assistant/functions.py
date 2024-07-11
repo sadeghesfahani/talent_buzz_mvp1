@@ -16,7 +16,9 @@ def update_user_basic_data(
         last_name: str,
         phone_number: str,
         bio: str,
+        headline: str,
         tags: List[str],
+        user: User,
         **kwargs
 
 ):
@@ -27,16 +29,20 @@ def update_user_basic_data(
     :param last_name: Last name of the user
     :param phone_number: Phone number of the user
     :param bio: Biography of the user
+    :param headline: Headline of the user
     :param tags: Tags associated with the user
+    :param user: User instance to update
     """
-    user = kwargs.get('user')
-    if user:
-        raise ValueError("User must be provided")
+
+    # user = kwargs.get('user')
+    # if user:
+    #     raise ValueError("User must be provided")
 
     user.first_name = first_name
     user.last_name = last_name
     user.phone_number = phone_number
     user.bio = bio
+    user.headline = headline
 
     if tags:
         user.tags.set(tags)
@@ -45,15 +51,14 @@ def update_user_basic_data(
     print(f"User's basic data updated successfully: {user.first_name} {user.last_name}")
 
 
-def update_user_skills(skills: List[str], user=None):
+def update_user_skills(skills: List[str], user: User, **kwargs):
     """
     Updates user's skills based on the provided list of skill names.
-
     :param skills: List of skill names to be added or updated for the user.
-    :param user: User instance whose skills are to be updated.
     """
-    if not user:
-        raise ValueError("User must be provided")
+    # user = kwargs.get('user')
+    # if not user:
+    #     raise ValueError("User must be provided")
 
     existing_skills = Skill.objects.filter(name__in=skills)
     existing_skill_names = set(existing_skills.values_list('name', flat=True))
@@ -111,7 +116,7 @@ def get_server_skills():
     return SkillMinimalSerializer(Skill.objects.all(), many=True).data
 
 
-def create_user_education(degree: str, major: Optional[str], university: Optional[str], **kwargs):
+def create_user_education(degree: str, major: Optional[str], university: Optional[str], user: User, **kwargs):
     """
      Create a new education record for the user.
     :param degree: it can be like, a bachelor, master, etc.
@@ -120,14 +125,14 @@ def create_user_education(degree: str, major: Optional[str], university: Optiona
     :return: text message
     """
 
-    user = kwargs.get('user')
-    if not user:
-        raise ValueError("User must be provided")
+    # user = kwargs.get('user')
+    # if not user:
+    #     raise ValueError("User must be provided")
     Education.objects.create(user=user, degree=degree, major=major, university=university)
     print(f"Education record created for user {user.username}")
 
 
-def create_certificate(title: str, institution: str, date_earned: Optional[str] = None,
+def create_certificate(user: User, title: str, institution: str, date_earned: Optional[str] = None,
                        description: Optional[str] = "", **kwargs):
     """
     Create a new certificate record for the user.
@@ -138,9 +143,9 @@ def create_certificate(title: str, institution: str, date_earned: Optional[str] 
     :return: text message
     """
 
-    user = kwargs.get('user')
-    if not user:
-        raise ValueError("User must be provided")
+    # user = kwargs.get('user')
+    # if not user:
+    #     raise ValueError("User must be provided")
 
     # Convert date_earned from string to date object if provided
     if date_earned:
@@ -162,7 +167,7 @@ def create_certificate(title: str, institution: str, date_earned: Optional[str] 
     return f"Certificate for {title} from {institution} successfully created."
 
 
-def create_experience(position: Optional[str], company: str, start_date: Optional[str] = None,
+def create_experience(user: User, position: Optional[str], company: str, start_date: Optional[str] = None,
                       end_date: Optional[str] = None, description: Optional[str] = "", **kwargs):
     """
     Create a new experience record for the user.
@@ -174,7 +179,7 @@ def create_experience(position: Optional[str], company: str, start_date: Optiona
     :param description: Description of the experience, optional
     """
 
-    user = kwargs.get('user')
+    # user = kwargs.get('user')
 
     # Initialize date variables
     date_start = None
@@ -208,7 +213,7 @@ def create_experience(position: Optional[str], company: str, start_date: Optiona
     return f"Experience record created for user {user.username} at {company}."
 
 
-def create_portfolio(title: str, description: Optional[str] = "", link: Optional[str] = None,**kwargs):
+def create_portfolio(user: User, title: str, description: Optional[str] = "", link: Optional[str] = None, **kwargs):
     """
     Create a new portfolio record for the user.
     :param user: User instance to whom the portfolio belongs
@@ -218,7 +223,7 @@ def create_portfolio(title: str, description: Optional[str] = "", link: Optional
     :return: Portfolio instance
     """
 
-    user = kwargs.get('user')
+    # user = kwargs.get('user')
 
     # Create the portfolio entry in the database
     Portfolio.objects.create(

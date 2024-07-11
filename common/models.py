@@ -22,7 +22,7 @@ class Document(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return self.user.personal_details.first_name + " " + self.user.personal_details.last_name + " - " + self.document.name
+        return self.user.first_name + " " + self.user.last_name + " - " + self.document.name
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
 
