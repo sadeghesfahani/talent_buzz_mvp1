@@ -235,3 +235,14 @@ def create_portfolio(user: User, title: str, description: Optional[str] = "", li
 
     print(f"Portfolio record created for user {user.username} with title '{title}'")
     return f"Portfolio record created for user {user.username} with title '{title}'"
+
+
+# def update_user_cv_note(user: User, note: str):
+#     """
+#     Update the CV note for the user.
+#     :param user:
+#     :param note:
+#     """
+#     user.cv_notes = note
+#     user.save()
+#     return f"User cv note updated successfully for {user.username}"

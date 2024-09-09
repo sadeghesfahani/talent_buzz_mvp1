@@ -125,6 +125,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     tags = TaggableManager()
     hourly_rate = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
 
+    # AI information
+    cv_notes = models.TextField(blank=True)
+
     # Company details
     company_name = models.CharField(max_length=REGULAR_CHAR_LENGTH, blank=True)
     kvk_number = models.CharField(max_length=REGULAR_CHAR_LENGTH, blank=True)

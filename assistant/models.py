@@ -30,3 +30,51 @@ class ModelPrice(models.Model):
 
     def __str__(self):
         return self.model
+
+
+class Instruction(models.Model):
+    name = models.CharField(max_length=255, blank=True)
+    text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.text
+
+class Assistant(models.Model):
+    user = models.ForeignKey('user.User', on_delete=models.CASCADE, related_name='user_assistants')
+    name = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+class Run(models.Model):
+    thread = models.ForeignKey('assistant.UserThread', on_delete=models.CASCADE, related_name='thread_runs')
+    assistant = models.ForeignKey('assistant.Assistant', on_delete=models.CASCADE, related_name='assistant_runs')
+    status = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    model = models.CharField(max_length=255, blank=True)
+    incomplete_details = models.TextField()
+    metadata = models.JSONField(blank=True, null=True)
+    response_format = models.CharField(max_length=255, blank=True)
+
+
+class Message(models.Model):
+    message_id = models.CharField(max_length=255, blank=True)
+    text = models.TextField()
+    user = models.ForeignKey('user.User', on_delete=models.CASCADE, related_name='user_messages')
+    thread = models.ForeignKey('assistant.UserThread', on_delete=models.CASCADE, related_name='thread_messages')
+    run = models.ForeignKey('assistant.Run', on_delete=models.CASCADE, related_name='run_messages')
+    role = models.CharField(max_length=255, blank=True)
+    metadata = models.JSONField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.text
+
+class UserThread(models.Model):
+    user = models.ForeignKey('user.User', on_delete=models.CASCADE, related_name='user_threads')
+    thread_id = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.user.first_name + " " + self.user.last_name + " - " + self.thread_id

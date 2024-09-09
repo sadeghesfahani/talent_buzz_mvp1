@@ -56,7 +56,7 @@ class UserAdmin(BaseUserAdmin):
         (None, {'fields': ('email', 'password')}),
         ('Personal info', {'fields': ('phone_number', 'avatar', 'first_name', 'last_name',)}),
         ('Flags', {'fields': ('is_active', 'is_staff', 'is_superuser', 'is_freelancer', 'is_company')}),
-        ('Freelancer details', {'fields': ('headline','bio','tags','skills')}),
+        ('Freelancer details', {'fields': ('headline','bio','tags','skills','cv_notes')}),
         ('Important dates', {'fields': ('last_login', 'date_joined')}),
         ('Rate', {'fields': (
         'average_communication', 'average_quality_of_work', 'average_punctuality', 'average_overall_satisfaction')}),

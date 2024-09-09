@@ -8,8 +8,9 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import QuerySet
 from openai import OpenAI
+from openai.types.beta import AssistantResponseFormatParam
 
-from assistant.models import Usage
+from assistant.models import Usage, UserThread
 from common.models import Document
 
 User = get_user_model()
@@ -20,7 +21,7 @@ class Assistant:
 
     def __init__(self, user: User, document_query: QuerySet[Document] or None, instruction: str,
                  functions: [Callable] = None,
-                 tread_id=None, format_type: typing.Literal["text", "json_object"] = "text",
+                 tread_id=None, format_type: AssistantResponseFormatParam = {"type": "text"},
                  expected_dictionary: typing.Optional[dict] = None,
                  model: typing.Literal[
                      "gpt-4o",
@@ -65,10 +66,10 @@ class Assistant:
             role="user"
         )
 
-        if self.format_type == "json_object":
+        if self.format_type["type"] == "json_object":
             self.client.beta.threads.messages.create(
                 thread_id=self.thread_id,
-                content=self.json_schema,
+                content="this json format should be the response: " + self.json_schema,
                 role="user"
             )
             run = self.client.beta.threads.runs.create_and_poll(
@@ -97,7 +98,7 @@ class Assistant:
         print(self.__tools)
         assistant = self.client.beta.assistants.create(
             instructions=self.instruction,
-            name="Math Tutor",
+            name="Talent buzz assistant",
             tools=self.__tools,
             model=self.model,
             tool_resources={"file_search": {"vector_store_ids": [self.vector_store_id]}}
@@ -264,7 +265,7 @@ class Assistant:
 
         elif run.status == "completed":
             response = self.client.beta.threads.messages.list(thread_id=run.thread_id).data[0]
-            if self.format_type == "json_object":
+            if self.format_type['type'] == "json_object":
                 try:
                     response_data = json.loads(response.content[0].text.value)
                     # Validate response data with json_schema
@@ -325,3 +326,53 @@ class Assistant:
             assistant_id=self.assistant_id,
         )
         return self.__process_ai_response(run, retry_count - 1)
+
+
+class AssistantV2:
+
+    def start(self, message: str, user: User):
+        data = self.__extract_information_from_threads_based_on_message(user, message)
+        self.__get_functions(data, message)
+        Assistant(user,document_query=self.__get_files(user, data, message),instruction="").send_message(message)
+
+
+
+    def __extract_information_from_threads_based_on_message(self, user: User, message: str) -> str:
+        threads = self.__get_user_threads_related_to_message(user, message)
+        prompt = self.__generate_prompt_for_data_needed(message)
+        data: list = []
+        for thread in threads:
+            data.append(self.__extract_data_based_on_prompt_on_a_thread(prompt, thread))
+
+        return self.__merge_data(data)
+
+    def __generate_prompt_for_data_needed(self, message: str) -> str:
+        return message
+
+    def __merge_data(self, data: typing.List[str]) -> str:
+        pass
+
+    def __extract_data_based_on_prompt_on_a_thread(self, prompt: str, thread) -> str:
+        pass
+
+    def __get_user_threads_related_to_message(self, user: User, message: str) -> QuerySet[UserThread]:
+        threads = self.__get_user_threads(user)
+        selected_threads = self.__choose_related_threads(threads, message)
+        return selected_threads
+
+    def __choose_related_threads(self, threads, message) -> QuerySet[UserThread]:
+        pass
+
+    @staticmethod
+    def __get_user_threads(user: User):
+        return UserThread.objects.filter(user=user)
+
+    def __select_or_create_thread(self, ) -> UserThread:
+        pass
+
+
+    def __get_functions(self, data: str, message: str):
+        pass
+
+    def __get_files(self, user: User, data: str, message: str):
+        pass
