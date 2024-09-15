@@ -86,15 +86,17 @@ def handle_no_skills_found(user: User, skills: List[str]):
     expected_dictionary = {"parents": [1, 5, 12, 55, 156], "is_found_parents": True}
 
     assistant_object = Assistant(user=user, document_query=None,
-                                 instruction="Find the parents for the skills by calling 'get_server_skills'. You will receive serialized data of all skills available on the server.",
+                                 instruction="Find the parents for the skills based on the provided serialized dictionary",
                                  format_type="json_object",
                                  model="gpt-3.5-turbo",
-                                 expected_dictionary=expected_dictionary,
-                                 functions=[get_server_skills])
+                                 expected_dictionary=expected_dictionary
+                                 )
 
+    server_skills = get_server_skills()
     for skill_name in skills:
         expected_dictionary_response = assistant_object.send_message(
-            f"The skill I am looking for its parents is {skill_name}")
+            f"The skill I am looking for its parents is {skill_name}",
+            additional_instructions=f"server skills are: {server_skills}")
 
         new_skill, created = Skill.objects.get_or_create(name=skill_name)
         if created:
@@ -235,7 +237,6 @@ def create_portfolio(user: User, title: str, description: Optional[str] = "", li
 
     print(f"Portfolio record created for user {user.username} with title '{title}'")
     return f"Portfolio record created for user {user.username} with title '{title}'"
-
 
 # def update_user_cv_note(user: User, note: str):
 #     """
